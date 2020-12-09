@@ -95,7 +95,7 @@ module hb_elastic_buf
     end
     
     
-    synchronizer #(.C_SYNC_STAGES(3)) synchronizer_0
+    sync_cdc_bit #(.C_SYNC_STAGES(3)) sync_cdc_bit_0
     (
         .clk    ( clk_dout   ),
         .d      ( start      ),

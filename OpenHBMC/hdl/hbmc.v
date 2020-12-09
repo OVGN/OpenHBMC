@@ -36,7 +36,27 @@ module hbmc #
     parameter C_HBMC_CS_MAX_LOW_TIME_US  = 4,
     parameter C_HBMC_FIXED_LATENCY       = 0,
     parameter C_IODELAY_GROUP_ID         = "HBMC",
-    parameter C_IODELAY_REFCLK_MHZ       = 200.0
+    parameter C_IODELAY_REFCLK_MHZ       = 200.0,
+    
+    parameter C_RWDS_USE_IDELAY          = 0,
+    parameter C_DQ7_USE_IDELAY           = 0,
+    parameter C_DQ6_USE_IDELAY           = 0,
+    parameter C_DQ5_USE_IDELAY           = 0,
+    parameter C_DQ4_USE_IDELAY           = 0,
+    parameter C_DQ3_USE_IDELAY           = 0,
+    parameter C_DQ2_USE_IDELAY           = 0,
+    parameter C_DQ1_USE_IDELAY           = 0,
+    parameter C_DQ0_USE_IDELAY           = 0,
+    
+    parameter [4:0] C_RWDS_IDELAY_TAPS_VALUE = 0,
+    parameter [4:0] C_DQ7_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ6_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ5_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ4_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ3_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ2_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ1_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
     input   wire            arst,
@@ -44,9 +64,8 @@ module hbmc #
     input   wire            clk_hbmc_270,
     input   wire            clk_idelay_ref,
     
-    output  wire            busy,
-    
     input   wire            cmd_req,
+    output  reg             cmd_ack = 1'b0,
     input   wire    [31:0]  cmd_mem_addr,
     input   wire    [15:0]  cmd_word_count,
     input   wire            cmd_wr_not_rd,
@@ -129,10 +148,6 @@ module hbmc #
     localparam  integer MIN_RWR = INITIAL_LATENCY;                                  /* Min Read-Write recovery time */
     
     localparam  integer MAX_BURST_COUNT = ((C_HBMC_CS_MAX_LOW_TIME_US * 1000) / HBMC_CLOCK_PERIOD_NS - INITIAL_LATENCY * 3);    // x3 - is a margin
-    
-    localparam  integer IODELAY_TAPS_COUNT = 32;
-    localparam  real    IODELAY_SINGLE_TAP_DUR_NS = ((1000.0 / C_IODELAY_REFCLK_MHZ) / 2) / IODELAY_TAPS_COUNT;     /* According to Xilinx DS189 v1.9 p.28 IDELAYRESOLUTION parameter */
-    localparam  integer RWDS_IDELAY_VALUE = (HBMC_CLOCK_PERIOD_NS / 4) / IODELAY_SINGLE_TAP_DUR_NS;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -270,36 +285,34 @@ module hbmc #
     reg     [15:0]  cr0_reg = CR0_INIT;
     reg     [15:0]  cr1_reg = CR1_INIT;
     
-    reg             reset_n         = 1'b0;
-    reg             cs_n            = 1'b1;
-    reg             cen             = 1'b0;
-    reg     [1:0]   rwds_sdr_i      = 2'b00;
-    reg             rwds_t          = RWDS_DIR_INPUT;
-    reg     [15:0]  dq_sdr_i        = 16'h0000;
-    reg     [7:0]   dq_t            = DQ_DIR_INPUT;
-    reg             rd_srst         = 1'b1;
-    reg             sts_busy        = 1'b1;
-    reg     [7:0]   latency_tc      = 8'h00;
-    reg     [7:0]   rwr_tc          = 8'h00;
-    reg     [15:0]  power_up_tc     = 16'h0000;
-    reg     [15:0]  hram_id_reg     = 16'h0000;
-    reg             fifo_rd         = 1'b0;
-    reg             mem_access      = 1'b0;
-    reg             word_last       = 1'b0;
-    reg     [47:0]  ca              = {32{1'b0}};
-    reg     [15:0]  burst_cnt       = {16{1'b0}};
-    reg     [15:0]  burst_size      = {16{1'b0}};
-    reg     [15:0]  word_count      = {16{1'b0}};
-    reg     [15:0]  word_count_prev = {16{1'b0}};
-    reg     [31:0]  mem_addr        = {32{1'b0}};
-    reg             wr_not_rd       = 1'b0;
-    reg             wrap_not_incr   = 1'b0;
+                            reg             reset_n         = 1'b0;
+                            reg             cs_n            = 1'b1;
+                            reg             cen             = 1'b0;
+                            reg     [1:0]   rwds_sdr_i      = 2'b00;
+                            reg             rwds_t          = RWDS_DIR_INPUT;
+                            reg     [15:0]  dq_sdr_i        = 16'h0000;
+    (* KEEP  = "TRUE" *)    reg     [7:0]   dq_t            = DQ_DIR_INPUT;
+                            reg             rd_srst         = 1'b1;
+                            reg     [7:0]   latency_tc      = 8'h00;
+                            reg     [7:0]   rwr_tc          = 8'h00;
+                            reg     [15:0]  power_up_tc     = 16'h0000;
+                            reg     [15:0]  hram_id_reg     = 16'h0000;
+                            reg             fifo_rd         = 1'b0;
+                            reg             mem_access      = 1'b0;
+                            reg             word_last       = 1'b0;
+                            reg     [47:0]  ca              = {32{1'b0}};
+                            reg     [15:0]  burst_cnt       = {16{1'b0}};
+                            reg     [15:0]  burst_size      = {16{1'b0}};
+                            reg     [15:0]  word_count      = {16{1'b0}};
+                            reg     [15:0]  word_count_prev = {16{1'b0}};
+                            reg     [31:0]  mem_addr        = {32{1'b0}};
+                            reg             wr_not_rd       = 1'b0;
+                            reg             wrap_not_incr   = 1'b0;
     
     wire            srst;
-    wire            cmd_req_sync;
     
     wire    [15:0]  dq_sdr_o;
-    wire            dq_sdr_o_vld;
+    wire    [7:0]   dq_sdr_o_vld;
     wire            rwds_delayed;
         
     wire            hb_recov_data_vld;
@@ -317,8 +330,6 @@ module hbmc #
     assign fifo_dout = hb_recov_data;
     assign fifo_dout_we  = hb_recov_data_vld & mem_access;
     assign fifo_dout_last = word_last;
-    
-    assign busy = sts_busy;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -339,11 +350,12 @@ module hbmc #
     
     hb_rwds_iobuf #
     (
-        .DRIVE_STRENGTH     ( C_HBMC_FPGA_DRIVE_STRENGTH ),
-        .SLEW_RATE          ( C_HBMC_FPGA_SLEW_RATE      ),
-        .IODELAY_REFCLK_MHZ ( C_IODELAY_REFCLK_MHZ       ),
-        .IODELAY_GROUP_ID   ( C_IODELAY_GROUP_ID         ),
-        .RWDS_IDELAY_VALUE  ( RWDS_IDELAY_VALUE          )
+        .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH  ),
+        .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE       ),
+        .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ        ),
+        .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID          ),
+        .USE_IDELAY_PRIMITIVE   ( C_RWDS_USE_IDELAY           ),
+        .IDELAY_TAPS_VALUE      ( C_RWDS_IDELAY_TAPS_VALUE    )
     )
     hb_rwds_iobuf_inst
     (
@@ -358,27 +370,51 @@ module hbmc #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
+    localparam  [7:0]   C_DQ_VECT_USE_IDELAY_PRIMITIVE = {
+                                                             C_DQ7_USE_IDELAY,
+                                                             C_DQ6_USE_IDELAY,
+                                                             C_DQ5_USE_IDELAY,
+                                                             C_DQ4_USE_IDELAY,
+                                                             C_DQ3_USE_IDELAY,
+                                                             C_DQ2_USE_IDELAY,
+                                                             C_DQ1_USE_IDELAY,
+                                                             C_DQ0_USE_IDELAY
+                                                         };
+    
+    localparam  [39:0]  C_DQ_VECT_IDELAY_TAPS_VALUE =   {
+                                                            C_DQ7_IDELAY_TAPS_VALUE,
+                                                            C_DQ6_IDELAY_TAPS_VALUE,
+                                                            C_DQ5_IDELAY_TAPS_VALUE,
+                                                            C_DQ4_IDELAY_TAPS_VALUE,
+                                                            C_DQ3_IDELAY_TAPS_VALUE,
+                                                            C_DQ2_IDELAY_TAPS_VALUE,
+                                                            C_DQ1_IDELAY_TAPS_VALUE,
+                                                            C_DQ0_IDELAY_TAPS_VALUE
+                                                        };
+    
     generate
         for (i = 0; i < 8; i = i + 1) begin : dq
             hb_dq_iobuf #
             (
-                .DRIVE_STRENGTH     ( C_HBMC_FPGA_DRIVE_STRENGTH ),
-                .SLEW_RATE          ( C_HBMC_FPGA_SLEW_RATE      ),
-                .IODELAY_REFCLK_MHZ ( C_IODELAY_REFCLK_MHZ       ),
-                .IODELAY_GROUP_ID   ( C_IODELAY_GROUP_ID         )
+                .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH                  ),
+                .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE                       ),
+                .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ                        ),
+                .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID                          ),
+                .USE_IDELAY_PRIMITIVE   ( C_DQ_VECT_USE_IDELAY_PRIMITIVE[i]           ),
+                .IDELAY_TAPS_VALUE      ( C_DQ_VECT_IDELAY_TAPS_VALUE[i*5 + 4 : i*5 ] )
             )
             hb_dq_iobuf_inst
             (
-                .arst       ( rd_srst        ),
-                .oddr_clk   ( clk_hbmc_0     ),
-                .iddr_clk   ( rwds_delayed   ),
-                .idelay_clk ( clk_idelay_ref ),
+                .arst       ( rd_srst         ),
+                .oddr_clk   ( clk_hbmc_0      ),
+                .iddr_clk   ( rwds_delayed    ),
+                .idelay_clk ( clk_idelay_ref  ),
                 
-                .buf_io     ( hb_dq[i]       ),
-                .buf_t      ( dq_t[i]        ),
+                .buf_io     ( hb_dq[i]        ),
+                .buf_t      ( dq_t[i]         ),
                 .sdr_i      ( {dq_sdr_i[i + 8], dq_sdr_i[i]} ),
                 .sdr_o      ( {dq_sdr_o[i + 8], dq_sdr_o[i]} ),
-                .sdr_o_vld  ( dq_sdr_o_vld   )
+                .sdr_o_vld  ( dq_sdr_o_vld[i] )
             );
         end
     endgenerate
@@ -389,7 +425,7 @@ module hbmc #
     (
         .clk_din    ( ~rwds_delayed     ),
         .din        ( dq_sdr_o          ),
-        .din_vld    ( dq_sdr_o_vld      ),
+        .din_vld    ( &dq_sdr_o_vld     ),
         
         .srst       ( rd_srst           ),
         .clk_dout   ( clk_hbmc_0        ),
@@ -399,19 +435,11 @@ module hbmc #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    synchronizer #(.C_SYNC_STAGES(3)) synchronizer_0
+    sync_cdc_bit #(.C_SYNC_STAGES(3)) sync_cdc_bit_0
     (
         .clk    ( clk_hbmc_0 ),
         .d      ( arst       ),
         .q      ( srst       )
-    );
-    
-    
-    synchronizer #(.C_SYNC_STAGES(3)) synchronizer_1
-    (
-        .clk    ( clk_hbmc_0   ),
-        .d      ( cmd_req      ),
-        .q      ( cmd_req_sync )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -772,7 +800,7 @@ module hbmc #
         rwds_t          <= RWDS_DIR_INPUT;
         dq_t            <= DQ_DIR_INPUT;
         rd_srst         <= 1'b1;
-        sts_busy        <= 1'b1;
+        cmd_ack         <= 1'b0;
         power_up_tc     <= 16'h0000;
         fifo_rd         <= 1'b0;
         word_last       <= 1'b0;
@@ -856,23 +884,25 @@ module hbmc #
                 
                 
                 ST_IDLE: begin
-                    if (cmd_req_sync) begin
+                    if (cmd_req) begin
                         mem_addr      <= cmd_mem_addr;
                         word_count    <= cmd_word_count;
                         wr_not_rd     <= cmd_wr_not_rd;
                         wrap_not_incr <= cmd_wrap_not_incr;
                         
-                        sts_busy <= 1'b1;
+                        cmd_ack <= 1'b1;
                         state <= ST_CMD_PREPARE;
-                    end else begin
-                        sts_busy <= 1'b0;
                     end
                 end
                 
                 
                 ST_CMD_PREPARE: begin
                     ca <= ((wr_not_rd)? CA_WR : CA_RD) | CA_MEM_SPACE | ((wrap_not_incr)? CA_BURST_WRAPPED : CA_BURST_LINEAR);
-                    state <= (wrap_not_incr)? ST_CHECK_WRAP_BURST_SIZE : ST_BURST_INIT;
+                    
+                    if (~cmd_req) begin
+                        cmd_ack <= 1'b0;
+                        state <= (wrap_not_incr)? ST_CHECK_WRAP_BURST_SIZE : ST_BURST_INIT;
+                    end
                 end
                 
                 
@@ -1002,7 +1032,6 @@ module hbmc #
                 ST_BURST_STOP: begin
                     if (word_last) begin
                         word_last <= 1'b0;
-                        sts_busy  <= 1'b0;
                         state <= ST_IDLE;
                     end else begin
                         state <= ST_BURST_INIT;

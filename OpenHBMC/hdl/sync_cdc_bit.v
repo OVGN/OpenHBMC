@@ -1,8 +1,8 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: synchronizer.v
- *  Purpose:  Simple, single bit, clock domain crossing synchronizer.
+ *  Filename: sync_cdc_bit.v
+ *  Purpose:  Single bit synchronizer.
  * ----------------------------------------------------------------------------
  *  Copyright © 2020, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
@@ -19,12 +19,12 @@
  * ----------------------------------------------------------------------------
  */
 
- 
+
 `default_nettype none
 `timescale 1ps / 1ps
 
 
-module synchronizer #
+module sync_cdc_bit #
 (
     parameter   C_SYNC_STAGES = 3
 )
@@ -33,14 +33,21 @@ module synchronizer #
     input   wire    d,
     output  wire    q
 );
-  
-    (* ASYNC_REG = "TRUE", SHREG_EXTRACT = "no" *) reg  [C_SYNC_STAGES - 1:0] sync_reg = {C_SYNC_STAGES{1'b0}};
 
-    always @(posedge clk) begin
-        sync_reg <= {sync_reg[C_SYNC_STAGES - 2:0], d};
-    end    
-    
-    assign q = sync_reg[C_SYNC_STAGES - 1];
+    xpm_cdc_single #
+    (
+        .DEST_SYNC_FF   ( C_SYNC_STAGES ),  // DECIMAL; range: 2-10
+        .INIT_SYNC_FF   ( 0             ),  // DECIMAL; 0 = disable simulation init values, 1=enable simulation init values
+        .SIM_ASSERT_CHK ( 0             ),  // DECIMAL; 0 = disable simulation messages, 1=enable simulation messages
+        .SRC_INPUT_REG  ( 0             )   // DECIMAL; 0 = do not register input, 1 = register input
+    )
+    xpm_cdc_single_inst
+    (
+        .src_clk        ( 1'b0 ),   // 1-bit input: optional; required when SRC_INPUT_REG = 1
+        .dest_clk       ( clk  ),   // 1-bit input: Clock signal for the destination clock domain.
+        .src_in         ( d    ),   // 1-bit input: Input signal to be synchronized to dest_clk domain.
+        .dest_out       ( q    )    // 1-bit output: src_in synchronized to the destination clock domain. This output is registered.
+    );
     
 endmodule
 

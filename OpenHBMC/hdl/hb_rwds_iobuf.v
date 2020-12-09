@@ -26,11 +26,12 @@
 
 module hb_rwds_iobuf #
 (
-    parameter DRIVE_STRENGTH     = 8,
-    parameter SLEW_RATE          = "SLOW",
-    parameter IODELAY_REFCLK_MHZ = 200.0,
-    parameter IODELAY_GROUP_ID   = "HBMC",
-    parameter RWDS_IDELAY_VALUE  = 0
+    parameter           DRIVE_STRENGTH       = 8,
+    parameter           SLEW_RATE            = "SLOW",
+    parameter           IODELAY_REFCLK_MHZ   = 200.0,
+    parameter           IODELAY_GROUP_ID     = "HBMC",
+    parameter           USE_IDELAY_PRIMITIVE = 0,
+    parameter   [4:0]   IDELAY_TAPS_VALUE    = 0
 )
 (
     input   wire            oddr_clk,
@@ -99,34 +100,43 @@ module hb_rwds_iobuf #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    (* IODELAY_GROUP = IODELAY_GROUP_ID *)              // Specifies group name for associated IDELAYs/ODELAYs and IDELAYCTRL
-    
-    IDELAYE2 #
-    (
-        .CINVCTRL_SEL           ( "FALSE"            ), // Enable dynamic clock inversion (FALSE, TRUE)
-        .DELAY_SRC              ( "IDATAIN"          ), // Delay input (IDATAIN, DATAIN)
-        .HIGH_PERFORMANCE_MODE  ( "FALSE"            ), // Reduced jitter ("TRUE"), Reduced power ("FALSE")
-        .IDELAY_TYPE            ( "FIXED"            ), // FIXED, VARIABLE, VAR_LOAD, VAR_LOAD_PIPE
-        .IDELAY_VALUE           ( RWDS_IDELAY_VALUE  ), // Input delay tap setting (0-31)
-        .PIPE_SEL               ( "FALSE"            ), // Select pipelined mode, FALSE, TRUE
-        .REFCLK_FREQUENCY       ( IODELAY_REFCLK_MHZ ), // IDELAYCTRL clock input frequency in MHz (190.0-210.0).
-        .SIGNAL_PATTERN         ( "DATA"             )  // DATA, CLOCK input signal
-    )
-    IDELAYE2_inst
-    (
-        .C              ( idelay_clk ),     // 1-bit input: Clock input
-        .CINVCTRL       ( 1'b0       ),     // 1-bit input: Dynamic clock inversion input
-        .DATAIN         ( 1'b0       ),     // 1-bit input: Internal delay data input
-        .IDATAIN        ( buf_o      ),     // 1-bit input: Data input from the I/O
-        .DATAOUT        ( idelay_o   ),     // 1-bit output: Delayed data output
-        .CNTVALUEIN     ( 5'b00000   ),     // 5-bit input: Counter value input
-        .CNTVALUEOUT    ( /*--NC--*/ ),     // 5-bit output: Counter value output
-        .CE             ( 1'b0       ),     // 1-bit input: Active high enable increment/decrement input
-        .INC            ( 1'b0       ),     // 1-bit input: Increment / Decrement tap delay input
-        .LD             ( 1'b0       ),     // 1-bit input: Load IDELAY_VALUE input
-        .LDPIPEEN       ( 1'b0       ),     // 1-bit input: Enable PIPELINE register to load data input
-        .REGRST         ( 1'b0       )      // 1-bit input: Active-high reset tap-delay input
-    );
+    generate
+        if (USE_IDELAY_PRIMITIVE) begin
+         
+            (* IODELAY_GROUP = IODELAY_GROUP_ID *)  // Specifies group name for associated IDELAYs/ODELAYs and IDELAYCTRL
+            
+            IDELAYE2 #
+            (
+                .CINVCTRL_SEL           ( "FALSE"                                          ),   // Enable dynamic clock inversion (FALSE, TRUE)
+                .DELAY_SRC              ( "IDATAIN"                                        ),   // Delay input (IDATAIN, DATAIN)
+                .HIGH_PERFORMANCE_MODE  ( "FALSE"                                          ),   // Reduced jitter ("TRUE"), Reduced power ("FALSE")
+                .IDELAY_TYPE            ( "FIXED"                                          ),   // FIXED, VARIABLE, VAR_LOAD, VAR_LOAD_PIPE
+                .IDELAY_VALUE           ( (IDELAY_TAPS_VALUE > 31)? 31 : IDELAY_TAPS_VALUE ),   // Input delay tap setting (0-31)
+                .PIPE_SEL               ( "FALSE"                                          ),   // Select pipelined mode, FALSE, TRUE
+                .REFCLK_FREQUENCY       ( IODELAY_REFCLK_MHZ                               ),   // IDELAYCTRL clock input frequency in MHz (190.0-210.0).
+                .SIGNAL_PATTERN         ( "CLOCK"                                          )    // DATA, CLOCK input signal
+            )
+            IDELAYE2_inst
+            (
+                .C              ( idelay_clk ),     // 1-bit input: Clock input
+                .CINVCTRL       ( 1'b0       ),     // 1-bit input: Dynamic clock inversion input
+                .DATAIN         ( 1'b0       ),     // 1-bit input: Internal delay data input
+                .IDATAIN        ( buf_o      ),     // 1-bit input: Data input from the I/O
+                .DATAOUT        ( idelay_o   ),     // 1-bit output: Delayed data output
+                .CNTVALUEIN     ( 5'b00000   ),     // 5-bit input: Counter value input
+                .CNTVALUEOUT    ( /*--NC--*/ ),     // 5-bit output: Counter value output
+                .CE             ( 1'b0       ),     // 1-bit input: Active high enable increment/decrement input
+                .INC            ( 1'b0       ),     // 1-bit input: Increment / Decrement tap delay input
+                .LD             ( 1'b0       ),     // 1-bit input: Load IDELAY_VALUE input
+                .LDPIPEEN       ( 1'b0       ),     // 1-bit input: Enable PIPELINE register to load data input
+                .REGRST         ( 1'b0       )      // 1-bit input: Active-high reset tap-delay input
+            );
+            
+        end else begin
+            /* Bypassing IDELAY primitive */
+            assign idelay_o = buf_o;
+        end
+    endgenerate
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
 

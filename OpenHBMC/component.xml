@@ -3,7 +3,7 @@
   <spirit:vendor>OVGN</spirit:vendor>
   <spirit:library>user</spirit:library>
   <spirit:name>OpenHBMC</spirit:name>
-  <spirit:version>1.0</spirit:version>
+  <spirit:version>1.1</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
       <spirit:name>S_AXI</spirit:name>
@@ -528,7 +528,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>35e8686d</spirit:value>
+            <spirit:value>57db6227</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -550,7 +550,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>35e8686d</spirit:value>
+            <spirit:value>4769e2e5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -564,7 +564,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>80b7ce28</spirit:value>
+            <spirit:value>c7cb952d</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -579,6 +579,20 @@
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
             <spirit:value>a74a0707</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
+      <spirit:view>
+        <spirit:name>xilinx_utilityxitfiles</spirit:name>
+        <spirit:displayName>Utility XIT/TTCL</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:xit.util</spirit:envIdentifier>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_utilityxitfiles_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>575734e7</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1617,13 +1631,162 @@
         <spirit:displayName>C Hbmc Fpga Slew Rate</spirit:displayName>
         <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_HBMC_FPGA_SLEW_RATE">SLOW</spirit:value>
       </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_RWDS_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Rwds Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_RWDS_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ7_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq7 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ7_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ6_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq6 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ6_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ5_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq5 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ5_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ4_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq4 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ4_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ3_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq3 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ3_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ2_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq2 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ2_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ1_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq1 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ1_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ0_USE_IDELAY</spirit:name>
+        <spirit:displayName>C Dq0 Use Idelay</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ0_USE_IDELAY">false</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_RWDS_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Rwds Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_RWDS_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_RWDS_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ7_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq7 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ7_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ7_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ6_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq6 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ6_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ6_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ5_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq5 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ5_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ5_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ4_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq4 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ4_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ4_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ3_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq3 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ3_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ3_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ2_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq2 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ2_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ2_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ1_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq1 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ1_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ1_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_DQ0_IDELAY_TAPS_VALUE</spirit:name>
+        <spirit:displayName>C Dq0 Idelay Taps Value</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE">0</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_DQ0_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
+      </spirit:modelParameter>
     </spirit:modelParameters>
   </spirit:model>
   <spirit:choices>
-    <spirit:choice>
-      <spirit:name>choice_list_61553a2e</spirit:name>
-      <spirit:enumeration>1DD3yKUwmgbHurpBQi976v9Xmy35iSDbeB</spirit:enumeration>
-    </spirit:choice>
     <spirit:choice>
       <spirit:name>choice_list_6fc15197</spirit:name>
       <spirit:enumeration>32</spirit:enumeration>
@@ -1680,28 +1843,38 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogsynthesis_view_fileset</spirit:name>
       <spirit:file>
+        <spirit:name>constrs/OpenHBMC.xdc</spirit:name>
+        <spirit:userFileType>xdc</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_wfifo_inst/genblk1.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/genblk1.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/dp_ram8x17/dp_ram8x17.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_inst/hb_elastic_buf_inst/dp_ram8x17_inst/dp_ram8x17</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hb_clk_obuf.v</spirit:name>
@@ -1728,7 +1901,11 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/synchronizer.v</spirit:name>
+        <spirit:name>hdl/sync_cdc_bit.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/sync_cdc_bus.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -1738,7 +1915,7 @@
       <spirit:file>
         <spirit:name>hdl/axi_hbmc.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_3a8b2d7e</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_f5000cb8</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -1766,26 +1943,32 @@
       <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_wfifo_inst/genblk1.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_rfifo_inst/genblk1.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/dp_ram8x17/dp_ram8x17.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_inst/hb_elastic_buf_inst/dp_ram8x17_inst/dp_ram8x17</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hb_clk_obuf.v</spirit:name>
@@ -1812,7 +1995,11 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/synchronizer.v</spirit:name>
+        <spirit:name>hdl/sync_cdc_bit.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/sync_cdc_bus.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -1847,9 +2034,9 @@
     <spirit:fileSet>
       <spirit:name>xilinx_xpgui_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>xgui/OpenHBMC_v1_0.tcl</spirit:name>
+        <spirit:name>xgui/OpenHBMC_v1_1.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_80b7ce28</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_c7cb952d</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -1858,6 +2045,13 @@
       <spirit:file>
         <spirit:name>bd/bd.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
+      </spirit:file>
+    </spirit:fileSet>
+    <spirit:fileSet>
+      <spirit:name>xilinx_utilityxitfiles_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>gui/OpenHBMC_v1_1.gtcl</spirit:name>
+        <spirit:userFileType>GTCL</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
   </spirit:fileSets>
@@ -1991,13 +2185,154 @@
       <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_FPGA_SLEW_RATE" spirit:choiceRef="choice_list_aa593469">SLOW</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
-      <spirit:name>BTC</spirit:name>
-      <spirit:displayName>ssss</spirit:displayName>
-      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.BTC" spirit:choiceRef="choice_list_61553a2e">1DD3yKUwmgbHurpBQi976v9Xmy35iSDbeB</spirit:value>
+      <spirit:name>C_RWDS_USE_IDELAY</spirit:name>
+      <spirit:displayName>RWDS</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_RWDS_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ7_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ7</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ7_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ6_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ6</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ6_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ5_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ5</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ5_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ4_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ4</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ4_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ3_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ3</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ3_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ2_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ2</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ2_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ1_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ1</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ1_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ0_USE_IDELAY</spirit:name>
+      <spirit:displayName>DQ0</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ0_USE_IDELAY">false</spirit:value>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_RWDS_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_RWDS_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
-            <xilinx:isEnabled xilinx:id="PARAM_ENABLEMENT.BTC">false</xilinx:isEnabled>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_RWDS_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ7_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ7_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ7_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ6_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ6_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ6_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ5_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ5_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ5_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ4_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ4_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ4_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ3_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ3_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ3_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ2_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ2_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ2_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ1_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ1_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ1_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_DQ0_IDELAY_TAPS_VALUE</spirit:name>
+      <spirit:displayName>Idelay Taps:</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE" spirit:minimum="0" spirit:maximum="31" spirit:rangeType="long">0</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_DQ0_IDELAY_TAPS_VALUE">false</xilinx:isEnabled>
           </xilinx:enablement>
         </xilinx:parameterInfo>
       </spirit:vendorExtensions>
@@ -2026,22 +2361,22 @@
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>OVGN</xilinx:vendorDisplayName>
       <xilinx:vendorURL>https://github.com/OVGN/OpenHBMC</xilinx:vendorURL>
-      <xilinx:coreRevision>25</xilinx:coreRevision>
+      <xilinx:coreRevision>33</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>xilinx.com:user:OpenHBMC:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2020-09-23T02:43:09Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2020-12-09T02:50:12Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
-      <xilinx:xilinxVersion>2020.1</xilinx:xilinxVersion>
+      <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="784528ef"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="96ea5e8c"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="4c4259b8"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="f8a23b5f"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="d3d8d609"/>
-      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="ba5601ed"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="20d03463"/>
+      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="e981501e"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="7556e24a"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>

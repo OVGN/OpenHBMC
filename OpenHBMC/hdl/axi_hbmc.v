@@ -47,7 +47,27 @@ module axi_hbmc #
     
     parameter C_IDELAYCTRL_INTEGRATED   = 1,
     parameter C_IODELAY_GROUP_ID        = "HBMC",
-    parameter real C_IODELAY_REFCLK_MHZ = 200.0
+    parameter real C_IODELAY_REFCLK_MHZ = 200.0,
+    
+    parameter C_RWDS_USE_IDELAY          = 0,
+    parameter C_DQ7_USE_IDELAY           = 0,
+    parameter C_DQ6_USE_IDELAY           = 0,
+    parameter C_DQ5_USE_IDELAY           = 0,
+    parameter C_DQ4_USE_IDELAY           = 0,
+    parameter C_DQ3_USE_IDELAY           = 0,
+    parameter C_DQ2_USE_IDELAY           = 0,
+    parameter C_DQ1_USE_IDELAY           = 0,
+    parameter C_DQ0_USE_IDELAY           = 0,
+    
+    parameter [4:0] C_RWDS_IDELAY_TAPS_VALUE = 0,
+    parameter [4:0] C_DQ7_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ6_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ5_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ4_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ3_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ2_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ1_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0] C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
     input   wire                                clk_hbmc_0,
@@ -220,8 +240,7 @@ module axi_hbmc #
     
     
     reg     cmd_req  = 1'b0;
-    wire    hbmc_busy;
-    wire    hbmc_busy_sync;
+    wire    cmd_ack;
     
     
     assign  s_axi_awready = axi_awready;
@@ -251,7 +270,7 @@ module axi_hbmc #
             );
             
             
-            synchronizer #(.C_SYNC_STAGES(3)) idelayctrl_rdy_sync_inst
+            sync_cdc_bit #(.C_SYNC_STAGES(3)) idelayctrl_rdy_sync_inst
             (
                 .clk    ( s_axi_aclk          ),
                 .d      ( idelayctrl_rdy      ),
@@ -262,15 +281,6 @@ module axi_hbmc #
             assign idelayctrl_rdy_sync = 1'b1;
         end
     endgenerate
-
-/*----------------------------------------------------------------------------------------------------------------------------*/
-    
-    synchronizer #(.C_SYNC_STAGES(3)) busy_sync_inst
-    (
-        .clk    ( s_axi_aclk     ),
-        .d      ( hbmc_busy      ),
-        .q      ( hbmc_busy_sync )
-    );
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
@@ -300,8 +310,7 @@ module axi_hbmc #
                 ST_RST_2         = 3'd2,
                 ST_XFER_SEL      = 3'd3,
                 ST_XFER_INIT     = 3'd4,
-                ST_WAIT_START    = 3'd5,
-                ST_WAIT_COMPLETE = 3'd6;
+                ST_WAIT_START    = 3'd5;
     
     reg     [2:0]   state = ST_RST_0;
     
@@ -340,9 +349,7 @@ module axi_hbmc #
                 ST_RST_2: begin
                     hbmc_rst <= 1'b0;
                     fifo_rst <= 1'b0;
-                    if (~hbmc_busy_sync) begin
-                        state <= ST_XFER_SEL;
-                    end
+                    state <= ST_XFER_SEL;
                 end
                 
                 
@@ -393,21 +400,16 @@ module axi_hbmc #
                 ST_XFER_INIT: begin
                     axi_awready <= 1'b0;
                     axi_arready <= 1'b0;
-                    cmd_req     <= 1'b1;
-                    state       <= ST_WAIT_START;
-                end
-                
-                
-                ST_WAIT_START: begin
-                    if (hbmc_busy_sync) begin
-                        cmd_req <= 1'b0;
-                        state <= ST_WAIT_COMPLETE;
+                    if (~cmd_ack) begin
+                        cmd_req <= 1'b1;
+                        state   <= ST_WAIT_START;
                     end
                 end
                 
                 
-                ST_WAIT_COMPLETE: begin
-                    if (~hbmc_busy_sync) begin
+                ST_WAIT_START: begin
+                    if (cmd_ack) begin
+                        cmd_req <= 1'b0;
                         state <= ST_XFER_SEL;
                     end
                 end
@@ -470,6 +472,34 @@ module axi_hbmc #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
+    wire            cmd_req_dst;
+    wire            cmd_ack_dst;
+    wire    [31:0]  cmd_mem_addr_dst;
+    wire    [15:0]  cmd_word_count_dst;
+    wire            cmd_wr_not_rd_dst;
+    wire            cmd_wrap_not_incr_dst;
+    
+    
+    sync_cdc_bus #
+    (
+        .C_SYNC_STAGES (3),
+        .C_SYNC_WIDTH  (50)     // 32 + 16 + 1 + 1 = 50
+    )
+    sync_cdc_bus_inst
+    (
+        .src_clk    ( s_axi_aclk    ),
+        .src_in     ( {cmd_mem_addr, cmd_word_count, cmd_wr_not_rd, cmd_wrap_not_incr} ),
+        .src_req    ( cmd_req       ),
+        .src_ack    ( cmd_ack       ),
+
+        .dst_clk    ( clk_hbmc_0    ),
+        .dst_out    ( {cmd_mem_addr_dst, cmd_word_count_dst, cmd_wr_not_rd_dst, cmd_wrap_not_incr_dst} ),
+        .dst_req    ( cmd_req_dst   ),
+        .dst_ack    ( cmd_ack_dst   )
+    );
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
     hbmc #
     (
         .C_MEMORY_SIZE_IN_BYTES     ( C_MEMORY_SIZE_IN_BYTES     ),
@@ -480,22 +510,41 @@ module axi_hbmc #
         .C_HBMC_CS_MAX_LOW_TIME_US  ( C_HBMC_CS_MAX_LOW_TIME_US  ),
         .C_HBMC_FIXED_LATENCY       ( C_HBMC_FIXED_LATENCY       ),
         .C_IODELAY_GROUP_ID         ( C_IODELAY_GROUP_ID         ),
-        .C_IODELAY_REFCLK_MHZ       ( C_IODELAY_REFCLK_MHZ       )
+        .C_IODELAY_REFCLK_MHZ       ( C_IODELAY_REFCLK_MHZ       ),
+        
+        .C_RWDS_USE_IDELAY          ( C_RWDS_USE_IDELAY          ),
+        .C_DQ7_USE_IDELAY           ( C_DQ7_USE_IDELAY           ),
+        .C_DQ6_USE_IDELAY           ( C_DQ6_USE_IDELAY           ),
+        .C_DQ5_USE_IDELAY           ( C_DQ5_USE_IDELAY           ),
+        .C_DQ4_USE_IDELAY           ( C_DQ4_USE_IDELAY           ),
+        .C_DQ3_USE_IDELAY           ( C_DQ3_USE_IDELAY           ),
+        .C_DQ2_USE_IDELAY           ( C_DQ2_USE_IDELAY           ),
+        .C_DQ1_USE_IDELAY           ( C_DQ1_USE_IDELAY           ),
+        .C_DQ0_USE_IDELAY           ( C_DQ0_USE_IDELAY           ),
+    
+        .C_RWDS_IDELAY_TAPS_VALUE   ( C_RWDS_IDELAY_TAPS_VALUE   ),
+        .C_DQ7_IDELAY_TAPS_VALUE    ( C_DQ7_IDELAY_TAPS_VALUE    ),
+        .C_DQ6_IDELAY_TAPS_VALUE    ( C_DQ6_IDELAY_TAPS_VALUE    ),
+        .C_DQ5_IDELAY_TAPS_VALUE    ( C_DQ5_IDELAY_TAPS_VALUE    ),
+        .C_DQ4_IDELAY_TAPS_VALUE    ( C_DQ4_IDELAY_TAPS_VALUE    ),
+        .C_DQ3_IDELAY_TAPS_VALUE    ( C_DQ3_IDELAY_TAPS_VALUE    ),
+        .C_DQ2_IDELAY_TAPS_VALUE    ( C_DQ2_IDELAY_TAPS_VALUE    ),
+        .C_DQ1_IDELAY_TAPS_VALUE    ( C_DQ1_IDELAY_TAPS_VALUE    ),
+        .C_DQ0_IDELAY_TAPS_VALUE    ( C_DQ0_IDELAY_TAPS_VALUE    )
     )
     hbmc_inst
     (
-        .arst               ( hbmc_rst          ),
-        .clk_hbmc_0         ( clk_hbmc_0        ),
-        .clk_hbmc_270       ( clk_hbmc_270      ),
-        .clk_idelay_ref     ( clk_idelay_ref    ),
+        .arst               ( hbmc_rst       ),
+        .clk_hbmc_0         ( clk_hbmc_0     ),
+        .clk_hbmc_270       ( clk_hbmc_270   ),
+        .clk_idelay_ref     ( clk_idelay_ref ),
         
-        .busy               ( hbmc_busy         ),
-        
-        .cmd_req            ( cmd_req           ),
-        .cmd_mem_addr       ( cmd_mem_addr      ),
-        .cmd_word_count     ( cmd_word_count    ),
-        .cmd_wr_not_rd      ( cmd_wr_not_rd     ),
-        .cmd_wrap_not_incr  ( cmd_wrap_not_incr ),
+        .cmd_req            ( cmd_req_dst           ),
+        .cmd_ack            ( cmd_ack_dst           ),
+        .cmd_mem_addr       ( cmd_mem_addr_dst      ),
+        .cmd_word_count     ( cmd_word_count_dst    ),
+        .cmd_wr_not_rd      ( cmd_wr_not_rd_dst     ),
+        .cmd_wrap_not_incr  ( cmd_wrap_not_incr_dst ),
         
         .fifo_dout          ( rfifo_wr_data     ),
         .fifo_dout_last     ( rfifo_wr_last     ),
