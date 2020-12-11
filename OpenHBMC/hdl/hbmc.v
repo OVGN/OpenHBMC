@@ -435,7 +435,7 @@ module hbmc #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    sync_cdc_bit #(.C_SYNC_STAGES(3)) sync_cdc_bit_0
+    sync_cdc_bit #(.C_SYNC_STAGES(3)) arst_sync
     (
         .clk    ( clk_hbmc_0 ),
         .d      ( arst       ),

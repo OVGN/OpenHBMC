@@ -1,7 +1,7 @@
 # OpenHBMC
 
 OpenHBMC is an open-source AXI4-based high performance HyperBus memory controller for Xilinx 7-series FPGAs.
-IP-core is packed for easy Vivado 2020.1 block design integration.
+IP-core is packed for easy Vivado 2020.2 block design integration.
 
 <p align="center">
   <img src="/OpenHBMC/data/ipcore_bd.png">
@@ -17,7 +17,7 @@ IP-core is packed for easy Vivado 2020.1 block design integration.
     - AXI4 FIXED bursts are treated as INCR burst type
     - AXI4 WRAP bursts of  2, 4, 8, 16 data beats
 - No AXI4 read or write reordering
-- Current resource utilization: 565-LUT, 678-FF, 1.5-BRAM (1.5 x RAMB36E1 = 3 x RAMB18E1)
+- Current resource utilization: 569-LUT, 790-FF, 1.5-BRAM (1.5 x RAMB36E1 = 3 x RAMB18E1)
 - Minimum HyperBus clock frequency is limited to 100MHz (due to IDELAY 2.5ns limitations)
 
 ## How to use:
