@@ -26,7 +26,11 @@ IP-core is packed for easy Vivado 2020.2 block design integration.
 3. Now OpenHBMC will appear in IP-catalog and may be avaliable both for standalone or block design integration.
 
 <p align="left">
-  <img src="/OpenHBMC/data/ipcore_bd_opt.png">
+  <img src="/OpenHBMC/data/ipcore_opt_0.png">
+</p>
+
+<p align="left">
+  <img src="/OpenHBMC/data/ipcore_opt_1.png">
 </p>
 
 ## Status:
