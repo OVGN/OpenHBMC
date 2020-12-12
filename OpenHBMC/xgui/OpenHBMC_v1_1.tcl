@@ -10,6 +10,7 @@ proc init_gui { IPINST } {
   set_property tooltip {Memory Configurations} ${Page_0}
   #Adding Group
   set Memory_options [ipgui::add_group $IPINST -name "Memory options" -parent ${Page_0} -display_name {Memory Options}]
+  ipgui::add_param $IPINST -name "C_MEMORY_SIZE_MBITS" -parent ${Memory_options} -show_range false
   set C_HBMC_CLOCK_HZ [ipgui::add_param $IPINST -name "C_HBMC_CLOCK_HZ" -parent ${Memory_options}]
   set_property tooltip {Value in Hz. Defines frequencies of clk_hbmc_0 (0 degree) and clk_hbmc_270 (270 degree). Minimum clock frequency is limited by 100MHz.} ${C_HBMC_CLOCK_HZ}
   set C_HBMC_CS_MAX_LOW_TIME_US [ipgui::add_param $IPINST -name "C_HBMC_CS_MAX_LOW_TIME_US" -parent ${Memory_options} -widget comboBox]
@@ -469,6 +470,15 @@ proc validate_PARAM_VALUE.C_IODELAY_REFCLK_MHZ { PARAM_VALUE.C_IODELAY_REFCLK_MH
 	return true
 }
 
+proc update_PARAM_VALUE.C_MEMORY_SIZE_MBITS { PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
+	# Procedure called to update C_MEMORY_SIZE_MBITS when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.C_MEMORY_SIZE_MBITS { PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
+	# Procedure called to validate C_MEMORY_SIZE_MBITS
+	return true
+}
+
 proc update_PARAM_VALUE.C_RWDS_USE_IDELAY { PARAM_VALUE.C_RWDS_USE_IDELAY } {
 	# Procedure called to update C_RWDS_USE_IDELAY when any of the dependent parameters in the arguments change
 }
@@ -550,24 +560,6 @@ proc validate_PARAM_VALUE.C_S_AXI_ADDR_WIDTH { PARAM_VALUE.C_S_AXI_ADDR_WIDTH } 
 	return true
 }
 
-proc update_PARAM_VALUE.C_S_AXI_BASEADDR { PARAM_VALUE.C_S_AXI_BASEADDR } {
-	# Procedure called to update C_S_AXI_BASEADDR when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_S_AXI_BASEADDR { PARAM_VALUE.C_S_AXI_BASEADDR } {
-	# Procedure called to validate C_S_AXI_BASEADDR
-	return true
-}
-
-proc update_PARAM_VALUE.C_S_AXI_HIGHADDR { PARAM_VALUE.C_S_AXI_HIGHADDR } {
-	# Procedure called to update C_S_AXI_HIGHADDR when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_S_AXI_HIGHADDR { PARAM_VALUE.C_S_AXI_HIGHADDR } {
-	# Procedure called to validate C_S_AXI_HIGHADDR
-	return true
-}
-
 
 proc update_MODELPARAM_VALUE.C_S_AXI_ID_WIDTH { MODELPARAM_VALUE.C_S_AXI_ID_WIDTH PARAM_VALUE.C_S_AXI_ID_WIDTH } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
@@ -582,16 +574,6 @@ proc update_MODELPARAM_VALUE.C_S_AXI_DATA_WIDTH { MODELPARAM_VALUE.C_S_AXI_DATA_
 proc update_MODELPARAM_VALUE.C_S_AXI_ADDR_WIDTH { MODELPARAM_VALUE.C_S_AXI_ADDR_WIDTH PARAM_VALUE.C_S_AXI_ADDR_WIDTH } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.C_S_AXI_ADDR_WIDTH}] ${MODELPARAM_VALUE.C_S_AXI_ADDR_WIDTH}
-}
-
-proc update_MODELPARAM_VALUE.C_S_AXI_BASEADDR { MODELPARAM_VALUE.C_S_AXI_BASEADDR PARAM_VALUE.C_S_AXI_BASEADDR } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.C_S_AXI_BASEADDR}] ${MODELPARAM_VALUE.C_S_AXI_BASEADDR}
-}
-
-proc update_MODELPARAM_VALUE.C_S_AXI_HIGHADDR { MODELPARAM_VALUE.C_S_AXI_HIGHADDR PARAM_VALUE.C_S_AXI_HIGHADDR } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.C_S_AXI_HIGHADDR}] ${MODELPARAM_VALUE.C_S_AXI_HIGHADDR}
 }
 
 proc update_MODELPARAM_VALUE.C_HBMC_CLOCK_HZ { MODELPARAM_VALUE.C_HBMC_CLOCK_HZ PARAM_VALUE.C_HBMC_CLOCK_HZ } {
@@ -752,5 +734,10 @@ proc update_MODELPARAM_VALUE.C_DQ1_IDELAY_TAPS_VALUE { MODELPARAM_VALUE.C_DQ1_ID
 proc update_MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE { MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE PARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE}] ${MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE}
+}
+
+proc update_MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS { MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.C_MEMORY_SIZE_MBITS}] ${MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS}
 }
 

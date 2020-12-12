@@ -26,9 +26,13 @@
 
 module axi_hbmc #
 (
-    parameter C_S_AXI_BASEADDR = 32'h00000000,
-    parameter C_S_AXI_HIGHADDR = 32'hffffffff,
+    /* TODO: can't properly pass BASE and HIGH addresses from the 
+     * Block Design Address Editor. Some special undocumented tcl
+     * script command is needed. Requires some research. */
+    // parameter C_S_AXI_BASEADDR = 32'h00000000,
+    // parameter C_S_AXI_HIGHADDR = 32'hffffffff,
     
+    parameter C_MEMORY_SIZE_MBITS  = 64,
     parameter C_S_AXI_ID_WIDTH     = 1,
     parameter C_S_AXI_DATA_WIDTH   = 32,
     parameter C_S_AXI_ADDR_WIDTH   = 32,
@@ -45,9 +49,9 @@ module axi_hbmc #
     parameter C_HBMC_CS_MAX_LOW_TIME_US  = 4,
     parameter C_HBMC_FIXED_LATENCY       = 0,
     
-    parameter C_IDELAYCTRL_INTEGRATED   = 1,
-    parameter C_IODELAY_GROUP_ID        = "HBMC",
-    parameter real C_IODELAY_REFCLK_MHZ = 200.0,
+    parameter C_IDELAYCTRL_INTEGRATED    = 1,
+    parameter C_IODELAY_GROUP_ID         = "HBMC",
+    parameter real C_IODELAY_REFCLK_MHZ  = 200.0,
     
     parameter C_RWDS_USE_IDELAY          = 0,
     parameter C_DQ7_USE_IDELAY           = 0,
@@ -161,7 +165,7 @@ module axi_hbmc #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  C_MEMORY_SIZE_IN_BYTES = C_S_AXI_HIGHADDR - C_S_AXI_BASEADDR + 1;
+    localparam  C_MEMORY_SIZE_IN_BYTES = (C_MEMORY_SIZE_MBITS / 8) * 1024 * 1024;
     
     
     localparam  AXI_FIXD_BURST  = 2'b00,
@@ -533,7 +537,7 @@ module axi_hbmc #
     
     hbmc #
     (
-        .C_MEMORY_SIZE_IN_BYTES     ( C_MEMORY_SIZE_IN_BYTES     ),
+        .C_AXI_DATA_WIDTH           ( C_S_AXI_DATA_WIDTH         ),
         .C_HBMC_CLOCK_HZ            ( C_HBMC_CLOCK_HZ            ),
         .C_HBMC_FPGA_DRIVE_STRENGTH ( C_HBMC_FPGA_DRIVE_STRENGTH ),
         .C_HBMC_FPGA_SLEW_RATE      ( C_HBMC_FPGA_SLEW_RATE      ),
@@ -552,7 +556,7 @@ module axi_hbmc #
         .C_DQ2_USE_IDELAY           ( C_DQ2_USE_IDELAY           ),
         .C_DQ1_USE_IDELAY           ( C_DQ1_USE_IDELAY           ),
         .C_DQ0_USE_IDELAY           ( C_DQ0_USE_IDELAY           ),
-    
+        
         .C_RWDS_IDELAY_TAPS_VALUE   ( C_RWDS_IDELAY_TAPS_VALUE   ),
         .C_DQ7_IDELAY_TAPS_VALUE    ( C_DQ7_IDELAY_TAPS_VALUE    ),
         .C_DQ6_IDELAY_TAPS_VALUE    ( C_DQ6_IDELAY_TAPS_VALUE    ),
@@ -565,10 +569,10 @@ module axi_hbmc #
     )
     hbmc_inst
     (
-        .arst               ( hbmc_rst       ),
-        .clk_hbmc_0         ( clk_hbmc_0     ),
-        .clk_hbmc_270       ( clk_hbmc_270   ),
-        .clk_idelay_ref     ( clk_idelay_ref ),
+        .arst               ( hbmc_rst              ),
+        .clk_hbmc_0         ( clk_hbmc_0            ),
+        .clk_hbmc_270       ( clk_hbmc_270          ),
+        .clk_idelay_ref     ( clk_idelay_ref        ),
         
         .cmd_req            ( cmd_req_dst           ),
         .cmd_ack            ( cmd_ack_dst           ),
@@ -577,20 +581,20 @@ module axi_hbmc #
         .cmd_wr_not_rd      ( cmd_wr_not_rd_dst     ),
         .cmd_wrap_not_incr  ( cmd_wrap_not_incr_dst ),
         
-        .fifo_dout          ( rfifo_wr_data     ),
-        .fifo_dout_last     ( rfifo_wr_last     ),
-        .fifo_dout_we       ( rfifo_wr_ena      ),
-         
-        .fifo_din           ( wfifo_rd_data     ),
-        .fifo_din_strb      ( wfifo_rd_strb     ),
-        .fifo_din_re        ( wfifo_rd_ena      ),
+        .fifo_dout          ( rfifo_wr_data ),
+        .fifo_dout_last     ( rfifo_wr_last ),
+        .fifo_dout_we       ( rfifo_wr_ena  ),
         
-        .hb_ck_p            ( hb_ck_p           ),
-        .hb_ck_n            ( hb_ck_n           ),
-        .hb_reset_n         ( hb_reset_n        ),
-        .hb_cs_n            ( hb_cs_n           ),
-        .hb_rwds            ( hb_rwds           ),
-        .hb_dq              ( hb_dq             )
+        .fifo_din           ( wfifo_rd_data ),
+        .fifo_din_strb      ( wfifo_rd_strb ),
+        .fifo_din_re        ( wfifo_rd_ena  ),
+        
+        .hb_ck_p            ( hb_ck_p       ),
+        .hb_ck_n            ( hb_ck_n       ),
+        .hb_reset_n         ( hb_reset_n    ),
+        .hb_cs_n            ( hb_cs_n       ),
+        .hb_rwds            ( hb_rwds       ),
+        .hb_dq              ( hb_dq         )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/

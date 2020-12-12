@@ -27,8 +27,7 @@
 
 module hbmc #
 (
-    parameter C_AXI_DWIDTH               = 32,
-    parameter C_MEMORY_SIZE_IN_BYTES     = 8 * 1024 * 1024,
+    parameter C_AXI_DATA_WIDTH           = 32,
     parameter C_HBMC_CLOCK_HZ            = 166000000,
     parameter C_HBMC_FPGA_DRIVE_STRENGTH = 8,
     parameter C_HBMC_FPGA_SLEW_RATE      = "SLOW",
@@ -925,7 +924,7 @@ module hbmc #
                  * 32bit x 8  beats = 32 bytes  - supported by HyperBus
                  * 32bit x 16 beats = 64 bytes  - supported by HyperBus
                  */
-                    if ((C_AXI_DWIDTH == 64) || (word_count != WRAPPED_BURST_8_BYTE)) begin
+                    if ((C_AXI_DATA_WIDTH == 64) || (word_count != WRAPPED_BURST_8_BYTE)) begin
                         
                         /* Check if new wrapped burst size changed */
                         if (word_count_prev != word_count) begin
@@ -964,10 +963,10 @@ module hbmc #
                 /* First half of the 8-byte wrapped burst transfer */
                 ST_WRAP_BURST_8BYTE_XFER_FIRST: begin
                     if (wr_not_rd) begin
-                        wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DWIDTH == 32)? 16'd2 : 16'd1);
+                        wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
                         state <= (wr_burst_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
                     end else begin
-                        rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DWIDTH == 32)? 16'd2 : 16'd1);
+                        rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
                         state <= (rd_burst_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
                     end
                 end
@@ -976,7 +975,7 @@ module hbmc #
                 /* Incrementing wrapped burst address */
                 ST_WRAP_BURST_8BYTE_ADDR_INCR: begin
                 
-                    if (C_AXI_DWIDTH == 32) begin
+                    if (C_AXI_DATA_WIDTH == 32) begin
                         mem_addr <= (mem_addr[1])? (mem_addr & 32'hFFFF_FFFC) : (mem_addr | 32'h2);
                     end else begin  // 16-bit
                         mem_addr <= (mem_addr[1])? (mem_addr & 32'hFFFF_FFFE) : (mem_addr | 32'h1);
@@ -990,10 +989,10 @@ module hbmc #
                 /* Second half of the 8-byte wrapped burst transfer */
                 ST_WRAP_BURST_8BYTE_XFER_SECOND: begin
                     if (wr_not_rd) begin
-                        wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DWIDTH == 32)? 16'd2 : 16'd1);
+                        wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
                         state <= (wr_burst_done)? ST_BURST_STOP : state;
                     end else begin
-                        rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DWIDTH == 32)? 16'd2 : 16'd1);
+                        rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
                         state <= (rd_burst_done)? ST_BURST_STOP : state;
                     end
                 end
