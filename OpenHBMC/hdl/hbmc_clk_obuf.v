@@ -1,10 +1,10 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: hb_clk_obuf.v
+ *  Filename: hbmc_clk_obuf.v
  *  Purpose:  HyperBus clock forwarding output buffer.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 `timescale 1ps / 1ps
 
 
-module hb_clk_obuf #
+module hbmc_clk_obuf #
 (
-    parameter DRIVE_STRENGTH = 8,
-    parameter SLEW_RATE      = "SLOW"
+    parameter integer DRIVE_STRENGTH = 8,
+    parameter         SLEW_RATE      = "SLOW"
 )
 (
     input   wire    cen,
@@ -50,7 +50,7 @@ module hb_clk_obuf #
     ODDR_ck_p
     (
         .Q  ( oddr_clk_p ),     // 1-bit DDR output
-        .C  ( clk        ),     // 1-bit clock input
+        .C  ( ~clk       ),     // 1-bit clock input
         .CE ( 1'b1       ),     // 1-bit clock enable input
         .D1 ( cen        ),     // 1-bit data input (positive edge)
         .D2 ( 1'b0       ),     // 1-bit data input (negative edge)
@@ -81,7 +81,7 @@ module hb_clk_obuf #
     ODDR_ck_n
     (
         .Q  ( oddr_clk_n ),     // 1-bit DDR output
-        .C  ( clk        ),     // 1-bit clock input
+        .C  ( ~clk       ),     // 1-bit clock input
         .CE ( 1'b1       ),     // 1-bit clock enable input
         .D1 ( ~cen       ),     // 1-bit data input (positive edge)
         .D2 ( 1'b1       ),     // 1-bit data input (negative edge)

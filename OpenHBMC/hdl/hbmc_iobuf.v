@@ -1,10 +1,10 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: hb_dq_iobuf.v
- *  Purpose:  HyperBus data single buffer.
+ *  Filename: hbmc_iobuf.v
+ *  Purpose:  HyperBus I/O logic.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,36 +24,39 @@
 `timescale 1ps / 1ps
 
 
-module hb_dq_iobuf #
+module hbmc_iobuf #
 (
-    parameter           DRIVE_STRENGTH       = 8,
-    parameter           SLEW_RATE            = "SLOW",
-    parameter           IODELAY_REFCLK_MHZ   = 200.0,
-    parameter           IODELAY_GROUP_ID     = "HBMC",
-    parameter           USE_IDELAY_PRIMITIVE = 0,
-    parameter   [4:0]   IDELAY_TAPS_VALUE    = 0
+    parameter   integer DRIVE_STRENGTH          = 8,
+    parameter           SLEW_RATE               = "SLOW",
+    parameter   integer USE_IDELAY_PRIMITIVE    = 0,
+    parameter   real    IODELAY_REFCLK_MHZ      = 200.0,
+    parameter           IODELAY_GROUP_ID        = "HBMC",
+    parameter   [4:0]   IDELAY_TAPS_VALUE       = 0
 )
 (
-    input   wire            arst,
+    input   wire            arstn,
     input   wire            oddr_clk,
-    input   wire            iddr_clk,
+    input   wire            iserdes_clk,
+    input   wire            iserdes_clkdiv,
     input   wire            idelay_clk,
     
     inout   wire            buf_io,
     input   wire            buf_t,
     input   wire    [1:0]   sdr_i,
-    output  wire    [1:0]   sdr_o,
-    output  wire            sdr_o_vld
+    output  reg     [5:0]   iserdes_o,
+    output  wire            iserdes_comb_o
 );
     
-    reg     [1:0]   dq_vld_pipe = 2'b00;
-    reg     [1:0]   dq_sdr_reg  = 2'b00;
-    wire    [1:0]   dq_sdr;
     wire            buf_o;
     wire            buf_i;
     wire            tristate;
     wire            idelay_o;
+    wire            iserdes_d;
+    wire    [5:0]   iserdes_q;
+    wire            iserdes_ddly;
     
+    
+/*----------------------------------------------------------------------------------------------------------------------------*/
     
     IOBUF #
     (
@@ -67,7 +70,7 @@ module hb_dq_iobuf #
         .I  ( buf_i     ),  // Buffer input
         .T  ( tristate  )   // 3-state enable input, high = input, low = output
     );
-    
+
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     ODDR #
@@ -139,56 +142,94 @@ module hb_dq_iobuf #
                 .REGRST         ( 1'b0       )      // 1-bit input: Active-high reset tap-delay input
             );
             
+            assign iserdes_d    = 1'b0;
+            assign iserdes_ddly = idelay_o;
+            
         end else begin
             /* Bypassing IDELAY primitive */
-            assign idelay_o = buf_o;
+            assign iserdes_d    = buf_o;
+            assign iserdes_ddly = 1'b0;
         end
     endgenerate
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    IDDR #
+    localparam IOBDELAY = (USE_IDELAY_PRIMITIVE)? "BOTH" : "NONE";
+    
+    
+    ISERDESE2 #
     (
-        .DDR_CLK_EDGE   ( "SAME_EDGE_PIPELINED" ),  // "OPPOSITE_EDGE", "SAME_EDGE" or "SAME_EDGE_PIPELINED"
-        .INIT_Q1        ( 1'b0                  ),  // Initial value of Q1: 1'b0 or 1'b1
-        .INIT_Q2        ( 1'b0                  ),  // Initial value of Q2: 1'b0 or 1'b1
-        .SRTYPE         ( "ASYNC"               )   // Set/Reset type: "SYNC" or "ASYNC"
+        .SERDES_MODE        ( "MASTER"      ),  // MASTER, SLAVE
+        .INTERFACE_TYPE     ( "NETWORKING"  ),  // MEMORY, MEMORY_DDR3, MEMORY_QDR, NETWORKING, OVERSAMPLE
+        .DATA_RATE          ( "DDR"         ),  // DDR, SDR
+        .DATA_WIDTH         ( 6             ),  // Parallel data width (2-8,10,14)
+        
+        .DYN_CLKDIV_INV_EN  ( "FALSE"       ),  // Enable DYNCLKDIVINVSEL inversion (FALSE, TRUE)
+        .DYN_CLK_INV_EN     ( "FALSE"       ),  // Enable DYNCLKINVSEL inversion (FALSE, TRUE)
+        .OFB_USED           ( "FALSE"       ),  // Select OFB path (FALSE, TRUE)
+        .IOBDELAY           ( IOBDELAY      ),  // NONE, BOTH, IBUF, IFD
+        .NUM_CE             ( 1             ),  // Number of clock enables (1,2)
+        
+        .INIT_Q1            ( 1'b0          ),  // INIT_Q1 - INIT_Q4: Initial value on the Q outputs (0/1)
+        .INIT_Q2            ( 1'b0          ),
+        .INIT_Q3            ( 1'b0          ),
+        .INIT_Q4            ( 1'b0          ),
+        
+        .SRVAL_Q1           ( 1'b0          ),  // SRVAL_Q1 - SRVAL_Q4: Q output values when SR is used (0/1)
+        .SRVAL_Q2           ( 1'b0          ),
+        .SRVAL_Q3           ( 1'b0          ),
+        .SRVAL_Q4           ( 1'b0          )
     )
-    IDDR_inst
+    ISERDESE2_inst
     (
-        .Q1 ( dq_sdr[1] ),  // 1-bit output forr positive edge of clock
-        .Q2 ( dq_sdr[0] ),  // 1-bit output forr negative edge of clock
-        .C  ( iddr_clk  ),  // 1-bit clock input
-        .CE ( 1'b1      ),  // 1-bit clock enable input
-        .D  ( idelay_o  ),  // 1-bit DDR data input
-        .R  ( 1'b0      ),  // 1-bit reset
-        .S  ( 1'b0      )   // 1-bit set
+        .O              ( iserdes_comb_o    ),  // 1-bit output: Combinatorial output
+        
+        .Q1             ( iserdes_q[5]      ),  // Q1 - Q8: 1-bit (each) output: Registered data outputs
+        .Q2             ( iserdes_q[4]      ),
+        .Q3             ( iserdes_q[3]      ),
+        .Q4             ( iserdes_q[2]      ),
+        .Q5             ( iserdes_q[1]      ),
+        .Q6             ( iserdes_q[0]      ),
+        .Q7             ( /*-----NC-----*/  ),
+        .Q8             ( /*-----NC-----*/  ),
+        
+        .BITSLIP        ( 1'b0              ),  // 1-bit input: The BITSLIP pin performs a Bitslip operation synchronous to
+        
+        .CE1            ( 1'b1              ),  // CE1, CE2: 1-bit (each) input: Data register clock enable inputs
+        .CE2            ( 1'b1              ),
+        
+        .CLK            (  iserdes_clk      ),  // 1-bit input: High-speed clock
+        .CLKB           ( ~iserdes_clk      ),  // 1-bit input: High-speed secondary clock
+        .CLKDIV         ( iserdes_clkdiv    ),  // 1-bit input: Divided clock
+        .CLKDIVP        ( 1'b0              ),  // 1-bit input: TBD
+        .OCLK           ( 1'b0              ),  // 1-bit input: High speed output clock used when INTERFACE_TYPE="MEMORY"
+        .OCLKB          ( 1'b0              ),  // 1-bit input: High speed negative edge output clock
+        
+        .D              ( iserdes_d         ),  // 1-bit input: Data input
+        .DDLY           ( iserdes_ddly      ),  // 1-bit input: Serial data from IDELAYE2
+        .OFB            ( 1'b0              ),  // 1-bit input: Data feedback from OSERDESE2
+        .RST            ( ~arstn            ),  // 1-bit input: Active high asynchronous reset
+        
+        .DYNCLKDIVSEL   ( 1'b0              ),  // 1-bit input: Dynamic CLKDIV inversion
+        .DYNCLKSEL      ( 1'b0              ),  // 1-bit input: Dynamic CLK/CLKB inversion
+        
+        .SHIFTOUT1      ( /*-----NC-----*/  ),  // SHIFTOUT1-SHIFTOUT2: 1-bit (each) output: Data width expansion output ports
+        .SHIFTOUT2      ( /*-----NC-----*/  ),
+        
+        .SHIFTIN1       ( 1'b0              ),  // SHIFTIN1-SHIFTIN2: 1-bit (each) input: Data width expansion input ports
+        .SHIFTIN2       ( 1'b0              )
     );
     
+/*----------------------------------------------------------------------------------------------------------------------------*/
     
-    /* 
-     * To improve timings, data coming out of the IDDR is registered by the 
-     * falling edge of the clock, as IDDR buffer in the "SAME_EDGE_PIPELINED" 
-     * mode outputs data with highest T-setup and T-hold margin relatively 
-     * to the falling edge of the IDDR clock.
-     * 
-     * Special pipelined strobe is used to validate incoming data. Two clock
-     * cycle shift register allows to compensate single cycle latency of the 
-     * IDDR buffer and the additional register stage.
-     */
-    always @(negedge iddr_clk or posedge arst) begin
-        if (arst) begin
-            dq_vld_pipe <= 2'b00;
-            dq_sdr_reg  <= 2'b00;
+    /* Register ISERDESE2 output */
+    always @(posedge iserdes_clkdiv or negedge arstn) begin
+        if (~arstn) begin
+            iserdes_o <= {6{1'b0}};
         end else begin
-            dq_vld_pipe <= {dq_vld_pipe[0], 1'b1};
-            dq_sdr_reg  <= dq_sdr;
+            iserdes_o <= iserdes_q;
         end
     end
-    
-    
-    assign sdr_o = dq_sdr_reg;
-    assign sdr_o_vld = dq_vld_pipe[1];
     
 endmodule
 

@@ -3,7 +3,7 @@
   <spirit:vendor>OVGN</spirit:vendor>
   <spirit:library>user</spirit:library>
   <spirit:name>OpenHBMC</spirit:name>
-  <spirit:version>1.1</spirit:version>
+  <spirit:version>2.0</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
       <spirit:name>S_AXI</spirit:name>
@@ -515,7 +515,7 @@
         <spirit:displayName>Verilog Synthesis</spirit:displayName>
         <spirit:envIdentifier>verilogSource:vivado.xilinx.com:synthesis</spirit:envIdentifier>
         <spirit:language>verilog</spirit:language>
-        <spirit:modelName>axi_hbmc</spirit:modelName>
+        <spirit:modelName>hbmc_axi_top</spirit:modelName>
         <spirit:fileSetRef>
           <spirit:localName>xilinx_verilogsynthesis_xilinx_com_ip_fifo_generator_13_2__ref_view_fileset</spirit:localName>
         </spirit:fileSetRef>
@@ -523,12 +523,15 @@
           <spirit:localName>xilinx_verilogsynthesis_xilinx_com_ip_blk_mem_gen_8_4__ref_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:fileSetRef>
+          <spirit:localName>xilinx_verilogsynthesis_xilinx_com_ip_ila_6_2__ref_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:fileSetRef>
           <spirit:localName>xilinx_verilogsynthesis_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>3b1b8787</spirit:value>
+            <spirit:value>980fa900</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -537,7 +540,7 @@
         <spirit:displayName>Verilog Simulation</spirit:displayName>
         <spirit:envIdentifier>verilogSource:vivado.xilinx.com:simulation</spirit:envIdentifier>
         <spirit:language>verilog</spirit:language>
-        <spirit:modelName>axi_hbmc</spirit:modelName>
+        <spirit:modelName>hbmc_axi_top</spirit:modelName>
         <spirit:fileSetRef>
           <spirit:localName>xilinx_verilogbehavioralsimulation_xilinx_com_ip_fifo_generator_13_2__ref_view_fileset</spirit:localName>
         </spirit:fileSetRef>
@@ -545,12 +548,15 @@
           <spirit:localName>xilinx_verilogbehavioralsimulation_xilinx_com_ip_blk_mem_gen_8_4__ref_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:fileSetRef>
+          <spirit:localName>xilinx_verilogbehavioralsimulation_xilinx_com_ip_ila_6_2__ref_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:fileSetRef>
           <spirit:localName>xilinx_verilogbehavioralsimulation_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>1795c30b</spirit:value>
+            <spirit:value>980fa900</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -564,7 +570,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>6ba8670a</spirit:value>
+            <spirit:value>49584a2d</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -592,7 +598,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>575734e7</spirit:value>
+            <spirit:value>36018b5a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -612,7 +618,20 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>clk_hbmc_270</spirit:name>
+        <spirit:name>clk_hbmc_90</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>wire</spirit:typeName>
+              <spirit:viewNameRef>xilinx_verilogsynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_verilogbehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>clk_iserdes</spirit:name>
         <spirit:wire>
           <spirit:direction>in</spirit:direction>
           <spirit:wireTypeDefs>
@@ -635,7 +654,17 @@
               <spirit:viewNameRef>xilinx_verilogbehavioralsimulation</spirit:viewNameRef>
             </spirit:wireTypeDef>
           </spirit:wireTypeDefs>
+          <spirit:driver>
+            <spirit:defaultValue spirit:format="long">0</spirit:defaultValue>
+          </spirit:driver>
         </spirit:wire>
+        <spirit:vendorExtensions>
+          <xilinx:portInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.clk_idelay_ref" xilinx:dependency=" spirit:decode(id(&apos;MODELPARAM_VALUE.C_RWDS_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ7_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ6_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ5_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ4_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ3_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ2_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ1_USE_IDELAY&apos;))>0 or spirit:decode(id(&apos;MODELPARAM_VALUE.C_DQ0_USE_IDELAY&apos;))>0">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:portInfo>
+        </spirit:vendorExtensions>
       </spirit:port>
       <spirit:port>
         <spirit:name>s_axi_aclk</spirit:name>
@@ -1571,17 +1600,38 @@
       <spirit:modelParameter spirit:dataType="integer">
         <spirit:name>C_IDELAYCTRL_INTEGRATED</spirit:name>
         <spirit:displayName>C Idelayctrl Integrated</spirit:displayName>
-        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_IDELAYCTRL_INTEGRATED">true</spirit:value>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_IDELAYCTRL_INTEGRATED">false</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_IDELAYCTRL_INTEGRATED">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="string">
         <spirit:name>C_IODELAY_GROUP_ID</spirit:name>
         <spirit:displayName>C Iodelay Group Id</spirit:displayName>
         <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_IODELAY_GROUP_ID">HBMC</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_IODELAY_GROUP_ID">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="signed">
         <spirit:name>C_IODELAY_REFCLK_MHZ</spirit:name>
         <spirit:displayName>C Iodelay Refclk Mhz</spirit:displayName>
         <spirit:value spirit:format="float" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_IODELAY_REFCLK_MHZ">200</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.C_IODELAY_REFCLK_MHZ">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="integer">
         <spirit:name>C_S_AXI_AWUSER_WIDTH</spirit:name>
@@ -1840,79 +1890,83 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogsynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>constrs/OpenHBMC.xdc</spirit:name>
-        <spirit:userFileType>xdc</spirit:userFileType>
+        <spirit:name>hdl/ip/fifo_8b_32w/fifo_8b_32w.xci</spirit:name>
+        <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_id_fifo_axi_ar/fifo_8b_32w_inst/fifo_8b_32w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_wfifo_inst/genblk1.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/wFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/genblk1.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/rFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/ip/dp_ram8x17/dp_ram8x17.xci</spirit:name>
-        <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_inst/hb_elastic_buf_inst/dp_ram8x17_inst/dp_ram8x17</spirit:userFileType>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/hb_clk_obuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_arst_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_dq_iobuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_bit_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_elastic_buf.v</spirit:name>
+        <spirit:name>hdl/hbmc_bus_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_rwds_iobuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_clk_obuf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hbmc.v</spirit:name>
+        <spirit:name>hdl/hbmc_ctrl.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/rfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_dru.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/sync_cdc_bit.v</spirit:name>
+        <spirit:name>hdl/hbmc_elastic_buf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/sync_cdc_bus.v</spirit:name>
+        <spirit:name>hdl/hbmc_id_fifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/wfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_iobuf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/axi_hbmc.v</spirit:name>
+        <spirit:name>hdl/hbmc_rfifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_49e44028</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/hbmc_wfifo.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/hbmc_axi_top.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+        <spirit:userFileType>CHECKSUM_882e207a</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -1936,75 +1990,93 @@
       </spirit:vendorExtensions>
     </spirit:fileSet>
     <spirit:fileSet>
+      <spirit:name>xilinx_verilogsynthesis_xilinx_com_ip_ila_6_2__ref_view_fileset</spirit:name>
+      <spirit:vendorExtensions>
+        <xilinx:subCoreRef>
+          <xilinx:componentRef xilinx:vendor="xilinx.com" xilinx:library="ip" xilinx:name="ila" xilinx:version="6.2">
+            <xilinx:mode xilinx:name="create_mode"/>
+          </xilinx:componentRef>
+        </xilinx:subCoreRef>
+      </spirit:vendorExtensions>
+    </spirit:fileSet>
+    <spirit:fileSet>
       <spirit:name>xilinx_verilogbehavioralsimulation_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>hdl/ip/fifo_8b_32w/fifo_8b_32w.xci</spirit:name>
+        <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_id_fifo_axi_ar/fifo_8b_32w_inst/fifo_8b_32w</spirit:userFileType>
+      </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_wfifo_inst/genblk1.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/wFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_rfifo_inst/genblk1.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/rFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/ip/dp_ram8x17/dp_ram8x17.xci</spirit:name>
-        <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_inst/hb_elastic_buf_inst/dp_ram8x17_inst/dp_ram8x17</spirit:userFileType>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/hb_clk_obuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_arst_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_dq_iobuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_bit_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_elastic_buf.v</spirit:name>
+        <spirit:name>hdl/hbmc_bus_sync.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hb_rwds_iobuf.v</spirit:name>
+        <spirit:name>hdl/hbmc_clk_obuf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hbmc.v</spirit:name>
+        <spirit:name>hdl/hbmc_ctrl.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/rfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_dru.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/sync_cdc_bit.v</spirit:name>
+        <spirit:name>hdl/hbmc_elastic_buf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/sync_cdc_bus.v</spirit:name>
+        <spirit:name>hdl/hbmc_id_fifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/wfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_iobuf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/axi_hbmc.v</spirit:name>
+        <spirit:name>hdl/hbmc_rfifo.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/hbmc_wfifo.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/hbmc_axi_top.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
     </spirit:fileSet>
@@ -2029,11 +2101,21 @@
       </spirit:vendorExtensions>
     </spirit:fileSet>
     <spirit:fileSet>
+      <spirit:name>xilinx_verilogbehavioralsimulation_xilinx_com_ip_ila_6_2__ref_view_fileset</spirit:name>
+      <spirit:vendorExtensions>
+        <xilinx:subCoreRef>
+          <xilinx:componentRef xilinx:vendor="xilinx.com" xilinx:library="ip" xilinx:name="ila" xilinx:version="6.2">
+            <xilinx:mode xilinx:name="create_mode"/>
+          </xilinx:componentRef>
+        </xilinx:subCoreRef>
+      </spirit:vendorExtensions>
+    </spirit:fileSet>
+    <spirit:fileSet>
       <spirit:name>xilinx_xpgui_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>xgui/OpenHBMC_v1_1.tcl</spirit:name>
+        <spirit:name>xgui/OpenHBMC_v2_0.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_2bd253f1</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_06c61c3c</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -2047,7 +2129,7 @@
     <spirit:fileSet>
       <spirit:name>xilinx_utilityxitfiles_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>gui/OpenHBMC_v1_1.gtcl</spirit:name>
+        <spirit:name>gui/OpenHBMC_v2_0.gtcl</spirit:name>
         <spirit:userFileType>GTCL</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -2094,7 +2176,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_CS_MAX_LOW_TIME_US</spirit:name>
-      <spirit:displayName>CS Maximum Low  Time</spirit:displayName>
+      <spirit:displayName>tCSM Interval Value</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_CS_MAX_LOW_TIME_US" spirit:choiceRef="choice_pairs_6bb002cf">4</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
@@ -2105,17 +2187,38 @@
     <spirit:parameter>
       <spirit:name>C_IDELAYCTRL_INTEGRATED</spirit:name>
       <spirit:displayName>Integrated IDELAYCTRL</spirit:displayName>
-      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_IDELAYCTRL_INTEGRATED">true</spirit:value>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.C_IDELAYCTRL_INTEGRATED">false</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_IDELAYCTRL_INTEGRATED">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_IODELAY_GROUP_ID</spirit:name>
       <spirit:displayName>IODELAY Group ID</spirit:displayName>
       <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.C_IODELAY_GROUP_ID">HBMC</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_IODELAY_GROUP_ID">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_IODELAY_REFCLK_MHZ</spirit:name>
       <spirit:displayName>IODELAY Reference Clock</spirit:displayName>
       <spirit:value spirit:format="float" spirit:resolve="user" spirit:id="PARAM_VALUE.C_IODELAY_REFCLK_MHZ">200</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.C_IODELAY_REFCLK_MHZ">false</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_S_AXI_AWUSER_WIDTH</spirit:name>
@@ -2144,17 +2247,17 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_FPGA_DRIVE_STRENGTH</spirit:name>
-      <spirit:displayName>FPGA CK &amp; DQ &amp; RWDS Drive Strength</spirit:displayName>
+      <spirit:displayName>FPGA CK, DQ, RWDS Drive Strength</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_FPGA_DRIVE_STRENGTH" spirit:choiceRef="choice_pairs_92e21856">8</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_MEM_DRIVE_STRENGTH</spirit:name>
-      <spirit:displayName>Memory DQ &amp; RWDS Drive Strength</spirit:displayName>
+      <spirit:displayName>Memory DQ, RWDS Drive Strength</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH" spirit:choiceRef="choice_pairs_13f1228f">46</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_FPGA_SLEW_RATE</spirit:name>
-      <spirit:displayName>FPGA CK &amp; DQ &amp; RWDS Slew Rate</spirit:displayName>
+      <spirit:displayName>FPGA CK, DQ, RWDS Slew Rate</spirit:displayName>
       <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_FPGA_SLEW_RATE" spirit:choiceRef="choice_list_aa593469">SLOW</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
@@ -2339,11 +2442,11 @@
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>OVGN</xilinx:vendorDisplayName>
       <xilinx:vendorURL>https://github.com/OVGN/OpenHBMC</xilinx:vendorURL>
-      <xilinx:coreRevision>40</xilinx:coreRevision>
+      <xilinx:coreRevision>66</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>xilinx.com:user:OpenHBMC:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2020-12-12T19:01:32Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2021-08-29T23:39:12Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
       </xilinx:tags>
     </xilinx:coreExtensions>
@@ -2351,10 +2454,10 @@
       <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="784528ef"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="96ea5e8c"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="ec8438e9"/>
-      <xilinx:checksum xilinx:scope="ports" xilinx:value="d3d8d609"/>
-      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="0fed9391"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="f57b15e4"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="d722fc63"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="262a894f"/>
+      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="035dff81"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="7daa4e4b"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>

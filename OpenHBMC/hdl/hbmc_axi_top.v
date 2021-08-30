@@ -1,10 +1,10 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: axi_hbmc.v
+ *  Filename: hbmc_axi_top.v
  *  Purpose:  HyperBus memory controller AXI4 wrapper top module.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 `timescale 1ps / 1ps
 
 
-module axi_hbmc #
+module hbmc_axi_top #
 (
     /* TODO: can't properly pass BASE and HIGH addresses from the 
      * Block Design Address Editor. Some special undocumented tcl
@@ -32,50 +32,51 @@ module axi_hbmc #
     // parameter C_S_AXI_BASEADDR = 32'h00000000,
     // parameter C_S_AXI_HIGHADDR = 32'hffffffff,
     
-    parameter C_MEMORY_SIZE_MBITS  = 64,
-    parameter C_S_AXI_ID_WIDTH     = 1,
-    parameter C_S_AXI_DATA_WIDTH   = 32,
-    parameter C_S_AXI_ADDR_WIDTH   = 32,
-    parameter C_S_AXI_AWUSER_WIDTH = 0,
-    parameter C_S_AXI_ARUSER_WIDTH = 0,
-    parameter C_S_AXI_WUSER_WIDTH  = 0,
-    parameter C_S_AXI_RUSER_WIDTH  = 0,
-    parameter C_S_AXI_BUSER_WIDTH  = 0,
+    parameter integer C_MEMORY_SIZE_MBITS  = 64,
+    parameter integer C_S_AXI_ID_WIDTH     = 1,
+    parameter integer C_S_AXI_DATA_WIDTH   = 32,
+    parameter integer C_S_AXI_ADDR_WIDTH   = 32,
+    parameter integer C_S_AXI_AWUSER_WIDTH = 0,
+    parameter integer C_S_AXI_ARUSER_WIDTH = 0,
+    parameter integer C_S_AXI_WUSER_WIDTH  = 0,
+    parameter integer C_S_AXI_RUSER_WIDTH  = 0,
+    parameter integer C_S_AXI_BUSER_WIDTH  = 0,
     
-    parameter C_HBMC_CLOCK_HZ            = 166000000,
-    parameter C_HBMC_FPGA_DRIVE_STRENGTH = 8,
-    parameter C_HBMC_FPGA_SLEW_RATE      = "SLOW",
-    parameter C_HBMC_MEM_DRIVE_STRENGTH  = 46,
-    parameter C_HBMC_CS_MAX_LOW_TIME_US  = 4,
-    parameter C_HBMC_FIXED_LATENCY       = 0,
+    parameter integer C_HBMC_CLOCK_HZ            = 166000000,
+    parameter integer C_HBMC_FPGA_DRIVE_STRENGTH = 8,
+    parameter         C_HBMC_FPGA_SLEW_RATE      = "SLOW",
+    parameter integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
+    parameter integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
+    parameter         C_HBMC_FIXED_LATENCY       = 0,
     
-    parameter C_IDELAYCTRL_INTEGRATED    = 1,
-    parameter C_IODELAY_GROUP_ID         = "HBMC",
-    parameter real C_IODELAY_REFCLK_MHZ  = 200.0,
+    parameter         C_IDELAYCTRL_INTEGRATED    = 0,
+    parameter         C_IODELAY_GROUP_ID         = "HBMC",
+    parameter real    C_IODELAY_REFCLK_MHZ       = 200.0,
     
-    parameter C_RWDS_USE_IDELAY          = 0,
-    parameter C_DQ7_USE_IDELAY           = 0,
-    parameter C_DQ6_USE_IDELAY           = 0,
-    parameter C_DQ5_USE_IDELAY           = 0,
-    parameter C_DQ4_USE_IDELAY           = 0,
-    parameter C_DQ3_USE_IDELAY           = 0,
-    parameter C_DQ2_USE_IDELAY           = 0,
-    parameter C_DQ1_USE_IDELAY           = 0,
-    parameter C_DQ0_USE_IDELAY           = 0,
+    parameter         C_RWDS_USE_IDELAY = 0,
+    parameter         C_DQ7_USE_IDELAY  = 0,
+    parameter         C_DQ6_USE_IDELAY  = 0,
+    parameter         C_DQ5_USE_IDELAY  = 0,
+    parameter         C_DQ4_USE_IDELAY  = 0,
+    parameter         C_DQ3_USE_IDELAY  = 0,
+    parameter         C_DQ2_USE_IDELAY  = 0,
+    parameter         C_DQ1_USE_IDELAY  = 0,
+    parameter         C_DQ0_USE_IDELAY  = 0,
     
-    parameter [4:0] C_RWDS_IDELAY_TAPS_VALUE = 0,
-    parameter [4:0] C_DQ7_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ6_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ5_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ4_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ3_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ2_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ1_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ0_IDELAY_TAPS_VALUE  = 0
+    parameter [4:0]   C_RWDS_IDELAY_TAPS_VALUE = 0,
+    parameter [4:0]   C_DQ7_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ6_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ5_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ4_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ3_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ2_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ1_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
     input   wire                                clk_hbmc_0,
-    input   wire                                clk_hbmc_270,
+    input   wire                                clk_hbmc_90,
+    input   wire                                clk_iserdes,
     input   wire                                clk_idelay_ref,
 
     input   wire                                s_axi_aclk,
@@ -134,7 +135,7 @@ module axi_hbmc #
     output  wire                                s_axi_rlast,
     output  wire                                s_axi_rvalid,
     input   wire                                s_axi_rready,
-            
+
     /* HyperBus Interface Port */
     output  wire                                hb_ck_p,
     output  wire                                hb_ck_n,
@@ -187,78 +188,83 @@ module axi_hbmc #
                 WR_RD_REQ = 2'b11;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
+
+    reg             axi_awready;
+    reg             axi_arready;
+    reg             axi_bvalid;
     
-    reg     hbmc_rst = 1'b1;
-    reg     fifo_rst = 1'b1;
-    reg     idelayctrl_rst = 1'b1;
-    wire    idelayctrl_rdy_sync;
-    
-    reg     wr_xfer_done = 1'b1;
-    reg     rd_xfer_done = 1'b1;
-    
-    reg     wr_addr_done = 1'b0;
-    reg     wr_data_done = 1'b0;
+    wire            idelayctrl_rdy_sync;
+    wire            clk_idelay;
     
     
-    reg     [C_S_AXI_ID_WIDTH-1:0]  axi_axid    = {C_S_AXI_ID_WIDTH{1'b0}};
-    reg                             axi_awready = 1'b0;
-    reg                             axi_arready = 1'b0;
-    reg                             axi_bvalid  = 1'b0;
-    
-    reg     [31:0]  cmd_mem_addr      = {32{1'b0}};
-    reg     [15:0]  cmd_word_count    = {16{1'b0}};
+    /* HBMC command interface */
+    reg             cmd_req;
+    reg     [31:0]  cmd_mem_addr;
+    reg     [15:0]  cmd_word_cnt;
     reg             cmd_wr_not_rd     = 1'b0;
     reg             cmd_wrap_not_incr = 1'b0;
+    wire            cmd_ack;
     
     
-    wire    [15:0]  rfifo_wr_data;
-    wire            rfifo_wr_last;
-    wire            rfifo_wr_ena;
-    
-    wire    [15:0]  wfifo_rd_data;
-    wire    [1:0]   wfifo_rd_strb;
-    wire            wfifo_rd_ena;
+    /* Read ID FIFO wires */
+    wire    fifo_arid_full;
+    wire    fifo_arid_ena = s_axi_arvalid & s_axi_arready;
+    wire    fifo_rid_ena  = s_axi_rvalid  & s_axi_rready & s_axi_rlast;
     
     
+    /* Write ID FIFO wires */
+    wire    fifo_awid_full;
+    wire    fifo_awid_ena = s_axi_awvalid & s_axi_awready;
+    wire    fifo_bid_ena  = s_axi_bvalid  & s_axi_bready;
+    
+    
+    /* Read data FIFO wires */
+    wire    [15:0]                      rfifo_wr_data;
+    wire                                rfifo_wr_last;
+    wire                                rfifo_wr_ena;
     wire    [C_S_AXI_DATA_WIDTH-1:0]    rfifo_rd_dout;
+    wire    [9:0]                       rfifo_rd_free;
     wire                                rfifo_rd_last;
-    wire                                rfifo_rd_en = s_axi_rvalid & s_axi_rready;
+    wire                                rfifo_rd_ena = s_axi_rvalid & s_axi_rready;
     wire                                rfifo_rd_empty;
     
-    assign  s_axi_rid    = axi_axid;
-    assign  s_axi_rresp  = AXI_RESP_OKAY;
-    assign  s_axi_rdata  = rfifo_rd_dout;
-    assign  s_axi_rlast  = rfifo_rd_last;
-    assign  s_axi_rvalid = ~rfifo_rd_empty;
     
-    
+    /* Write data FIFO wires */
+    wire    [15:0]                      wfifo_rd_data;
+    wire    [1:0]                       wfifo_rd_strb;
+    wire                                wfifo_rd_ena;
     wire    [C_S_AXI_DATA_WIDTH-1:0]    wfifo_wr_din  = s_axi_wdata;
     wire    [C_S_AXI_DATA_WIDTH/8-1:0]  wfifo_wr_strb = s_axi_wstrb;
     wire                                wfifo_wr_ena  = s_axi_wvalid & s_axi_wready;
     wire                                wfifo_wr_full;
     
-    assign  s_axi_wready = ~wfifo_wr_full;
     
-    /* Read transfer will start if read address is valid and previous transfer is finished */
-    wire    axi_rd_condition = s_axi_arvalid & rd_xfer_done;
+    reg     wr_addr_done = 1'b0;
+    reg     wr_data_done = 1'b0;
+    reg     wr_xfer_done = 1'b1;
     
-    /* Write transfer will start if write address is valid and data is stored in FIFO */
-    wire    axi_wr_condition = s_axi_awvalid & wr_data_done;
-    
-    
-    reg     cmd_req  = 1'b0;
-    wire    cmd_ack;
+    wire    axi_rd_condition = s_axi_arvalid & (~fifo_arid_full) & (rfifo_rd_free > s_axi_arlen);
+    wire    axi_wr_condition = s_axi_awvalid & (~fifo_awid_full) & wr_data_done;
     
     
     assign  s_axi_awready = axi_awready;
     assign  s_axi_arready = axi_arready;
     
-    assign  s_axi_bid     = axi_axid;
+    assign  s_axi_rresp   = AXI_RESP_OKAY;
+    assign  s_axi_rdata   =  rfifo_rd_dout;
+    assign  s_axi_rlast   =  rfifo_rd_last;
+    assign  s_axi_rvalid  = ~rfifo_rd_empty;
+    
+    assign  s_axi_wready  = ~wfifo_wr_full;
     assign  s_axi_bresp   = AXI_RESP_OKAY;
     assign  s_axi_bvalid  = axi_bvalid;
-
-    assign  s_axi_buser = {C_S_AXI_BUSER_WIDTH{1'b0}};
-    assign  s_axi_ruser = {C_S_AXI_RUSER_WIDTH{1'b0}};
+    
+    generate
+        if (C_S_AXI_BUSER_WIDTH > 0) begin
+            assign  s_axi_buser = {C_S_AXI_BUSER_WIDTH{1'b0}};
+            assign  s_axi_ruser = {C_S_AXI_RUSER_WIDTH{1'b0}};
+        end
+    endgenerate
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
@@ -266,26 +272,54 @@ module axi_hbmc #
         if (C_IDELAYCTRL_INTEGRATED) begin
             
             wire    idelayctrl_rdy;
-        
-            (* IODELAY_GROUP = C_IODELAY_GROUP_ID *)
-            
-            IDELAYCTRL IDELAYCTRL_inst
+            wire    idelayctrl_rstn;
+    
+    
+            hbmc_arst_sync #
             (
-                .RST    ( idelayctrl_rst ),
-                .REFCLK ( clk_idelay_ref ),
-                .RDY    ( idelayctrl_rdy )
+                /* Current module requires min
+                 * 60ns of reset pulse width,
+                 * 32 stage synchronizer will
+                 * be enough for AXI clock
+                 * frequencies < 500MHz */
+                .C_SYNC_STAGES ( 32 )
+            )
+            hbmc_arst_sync_idelayctrl
+            (
+                .clk   ( s_axi_aclk      ),
+                .arstn ( s_axi_aresetn   ),
+                .rstn  ( idelayctrl_rstn )
             );
             
             
-            sync_cdc_bit #(.C_SYNC_STAGES(3)) idelayctrl_rdy_sync
+            (* IODELAY_GROUP = C_IODELAY_GROUP_ID *)
+            IDELAYCTRL
+            IDELAYCTRL_inst
             (
+                .RST    ( ~idelayctrl_rstn ),
+                .REFCLK ( clk_idelay_ref   ),
+                .RDY    ( idelayctrl_rdy   )
+            );
+            
+            
+            hbmc_bit_sync #
+            (
+                .C_SYNC_STAGES  ( 3     ),
+                .C_RESET_STATE  ( 1'b0  )
+            )
+            hbmc_bit_sync_idelayctrl_rdy
+            (
+                .arstn  ( s_axi_aresetn       ),
                 .clk    ( s_axi_aclk          ),
                 .d      ( idelayctrl_rdy      ),
                 .q      ( idelayctrl_rdy_sync )
             );
-    
+            
+            assign clk_idelay = clk_idelay_ref;
+            
         end else begin
             assign idelayctrl_rdy_sync = 1'b1;
+            assign clk_idelay = 1'b0;
         end
     endgenerate
 
@@ -295,7 +329,7 @@ module axi_hbmc #
     begin
         cmd_wr_not_rd     <= 1'b1;
         cmd_mem_addr      <= (s_axi_awaddr & (C_MEMORY_SIZE_IN_BYTES - 1) & AXI_ADDR_ALIGN_MASK) >> 1;
-        cmd_word_count    <= (s_axi_awsize)? ((s_axi_awlen + 1'b1) << (s_axi_awsize - 1'b1)) : ((s_axi_awlen + 1'b1) >> 1);
+        cmd_word_cnt      <= (s_axi_awsize)? ((s_axi_awlen + 1'b1) << (s_axi_awsize - 1'b1)) : ((s_axi_awlen + 1'b1) >> 1);
         cmd_wrap_not_incr <= (s_axi_awburst == AXI_WRAP_BURST)? 1'b1 : 1'b0;
     end
     endtask
@@ -305,59 +339,41 @@ module axi_hbmc #
     begin
         cmd_wr_not_rd     <= 1'b0;
         cmd_mem_addr      <= (s_axi_araddr & (C_MEMORY_SIZE_IN_BYTES - 1) & AXI_ADDR_ALIGN_MASK) >> 1;
-        cmd_word_count    <= (s_axi_arsize)? ((s_axi_arlen + 1'b1) << (s_axi_arsize - 1'b1)) : ((s_axi_arlen + 1'b1) >> 1);
+        cmd_word_cnt      <= (s_axi_arsize)? ((s_axi_arlen + 1'b1) << (s_axi_arsize - 1'b1)) : ((s_axi_arlen + 1'b1) >> 1);
         cmd_wrap_not_incr <= (s_axi_arburst == AXI_WRAP_BURST)? 1'b1 : 1'b0;
     end
     endtask
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  ST_RST_0         = 3'd0,
-                ST_RST_1         = 3'd1,
-                ST_RST_2         = 3'd2,
-                ST_XFER_SEL      = 3'd3,
-                ST_XFER_INIT     = 3'd4,
-                ST_WAIT_START    = 3'd5,
-                ST_WAIT_COMPLETE = 3'd6;
+    localparam  ST_RST           = 3'd0,
+                ST_XFER_SEL      = 3'd1,
+                ST_XFER_INIT     = 3'd2,
+                ST_WAIT_START    = 3'd3,
+                ST_WAIT_COMPLETE = 3'd4;
     
-    reg     [2:0]   state = ST_RST_0;
+    reg     [2:0]   state;
     
-    always @(posedge s_axi_aclk) begin
+    
+    /* Main transaction processing FSM */
+    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (~s_axi_aresetn) begin
-            hbmc_rst <= 1'b1;
-            fifo_rst <= 1'b1;
-            idelayctrl_rst <= 1'b1;
-        
-            cmd_req <= 1'b0;
-            axi_awready <= 1'b0;
-            axi_arready <= 1'b0;
-            state <= ST_RST_0;
+            cmd_req      <= 1'b0;
+            cmd_mem_addr <= {32{1'b0}};
+            cmd_word_cnt <= {16{1'b0}};
+            axi_awready  <= 1'b0;
+            axi_arready  <= 1'b0;
+            state        <= ST_RST;
         end else begin
             case (state)
-                ST_RST_0: begin
-                    hbmc_rst <= 1'b1;
-                    fifo_rst <= 1'b1;
-                    idelayctrl_rst <= 1'b1;
-                    
-                    cmd_req <= 1'b0;
+                ST_RST: begin
+                    cmd_req     <= 1'b0;
                     axi_awready <= 1'b0;
                     axi_arready <= 1'b0;
-                    state <= ST_RST_1;
-                end
-                
-                
-                ST_RST_1: begin 
-                    idelayctrl_rst <= 1'b0;
+                    
                     if (idelayctrl_rdy_sync) begin
-                        state <= ST_RST_2;
+                        state <= ST_XFER_SEL;
                     end
-                end
-                
-                
-                ST_RST_2: begin
-                    hbmc_rst <= 1'b0;
-                    fifo_rst <= 1'b0;
-                    state <= ST_XFER_SEL;
                 end
                 
                 
@@ -372,7 +388,6 @@ module axi_hbmc #
                         /* New AXI write request */
                         WR_REQ: begin
                             axi_awready <= 1'b1;
-                            axi_axid <= s_axi_awid;
                             hbmc_config_wr_cmd();
                             state <= ST_XFER_INIT;
                         end
@@ -380,7 +395,6 @@ module axi_hbmc #
                         /* New AXI read request */
                         RD_REQ: begin
                             axi_arready <= 1'b1;
-                            axi_axid <= s_axi_arid;
                             hbmc_config_rd_cmd();
                             state <= ST_XFER_INIT;
                         end
@@ -391,11 +405,9 @@ module axi_hbmc #
                              * on the previous operation */
                             if (cmd_wr_not_rd) begin
                                 axi_arready <= 1'b1;
-                                axi_axid <= s_axi_arid;
                                 hbmc_config_rd_cmd();
                             end else begin
                                 axi_awready <= 1'b1;
-                                axi_axid <= s_axi_awid;
                                 hbmc_config_wr_cmd();
                             end
                             
@@ -424,33 +436,16 @@ module axi_hbmc #
                 
                 
                 ST_WAIT_COMPLETE: begin
-                    if ((cmd_wr_not_rd & wr_xfer_done) || (~cmd_wr_not_rd & rd_xfer_done)) begin
+                    if ((cmd_wr_not_rd & wr_xfer_done) || (~cmd_wr_not_rd)) begin
                         state <= ST_XFER_SEL;
                     end
                 end
                 
                 
                 default: begin
-                    state <= ST_RST_0;
+                    state <= ST_RST;
                 end
             endcase
-        end
-    end
-    
-/*----------------------------------------------------------------------------------------------------------------------------*/
-
-    /* Checking AXI read transfer state */
-    always @(posedge s_axi_aclk) begin
-        if (~s_axi_aresetn) begin
-            rd_xfer_done <= 1'b1;
-        end else begin
-            if (s_axi_arvalid & s_axi_arready) begin
-                rd_xfer_done <= 1'b0;
-            end
-
-            if (s_axi_rvalid & s_axi_rready & s_axi_rlast) begin
-                rd_xfer_done <= 1'b1;
-            end
         end
     end
     
@@ -459,11 +454,11 @@ module axi_hbmc #
     localparam  ST_BRESP_IDLE = 1'b0,
                 ST_BRESP_SEND = 1'b1;
     
-    reg     state_bresp = ST_BRESP_IDLE;
+    reg         state_bresp;
     
     
     /* AXI write responding FSM */
-    always @(posedge s_axi_aclk) begin
+    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (~s_axi_aresetn) begin
             wr_addr_done <= 1'b0;
             wr_data_done <= 1'b0;
@@ -507,35 +502,63 @@ module axi_hbmc #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    wire            cmd_req_dst;
-    wire            cmd_ack_dst;
-    wire    [31:0]  cmd_mem_addr_dst;
-    wire    [15:0]  cmd_word_count_dst;
-    wire            cmd_wr_not_rd_dst;
-    wire            cmd_wrap_not_incr_dst;
+    wire    hbmc_rstn_sync;
     
     
-    sync_cdc_bus #
+    hbmc_arst_sync #
     (
-        .C_SYNC_STAGES (3),
-        .C_SYNC_WIDTH  (50)     // 32 + 16 + 1 + 1 = 50
+        .C_SYNC_STAGES ( 3 )
     )
-    sync_cdc_bus_inst
+    hbmc_arst_sync_inst
     (
-        .src_clk    ( s_axi_aclk    ),
-        .src_in     ( {cmd_mem_addr, cmd_word_count, cmd_wr_not_rd, cmd_wrap_not_incr} ),
-        .src_req    ( cmd_req       ),
-        .src_ack    ( cmd_ack       ),
-
-        .dst_clk    ( clk_hbmc_0    ),
-        .dst_out    ( {cmd_mem_addr_dst, cmd_word_count_dst, cmd_wr_not_rd_dst, cmd_wrap_not_incr_dst} ),
-        .dst_req    ( cmd_req_dst   ),
-        .dst_ack    ( cmd_ack_dst   )
+        .clk   ( clk_hbmc_0     ),
+        .arstn ( s_axi_aresetn  ),
+        .rstn  ( hbmc_rstn_sync )
     );
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    hbmc #
+    localparam  BUS_SYNC_WIDTH = 50;    // 32 + 16 + 1 + 1 = 50
+    
+    wire            cmd_req_dst;
+    wire            cmd_ack_dst;
+    wire    [31:0]  cmd_mem_addr_dst;
+    wire    [15:0]  cmd_word_cnt_dst;
+    wire            cmd_wr_not_rd_dst;
+    wire            cmd_wrap_not_incr_dst;
+    
+    
+    wire    [BUS_SYNC_WIDTH - 1:0]  src_data;
+    wire    [BUS_SYNC_WIDTH - 1:0]  dst_data;
+    
+    
+    assign src_data = {cmd_mem_addr, cmd_word_cnt, cmd_wr_not_rd, cmd_wrap_not_incr};
+    assign {cmd_mem_addr_dst, cmd_word_cnt_dst, cmd_wr_not_rd_dst, cmd_wrap_not_incr_dst} = dst_data;
+    
+    
+    hbmc_bus_sync #
+    (
+        .C_SYNC_STAGES ( 3              ),
+        .C_DATA_WIDTH  ( BUS_SYNC_WIDTH )
+    )
+    hbmc_bus_sync_inst
+    (
+        .src_clk    ( s_axi_aclk     ),
+        .src_rstn   ( s_axi_aresetn  ),
+        .src_data   ( src_data       ),
+        .src_req    ( cmd_req        ),
+        .src_ack    ( cmd_ack        ),
+        
+        .dst_clk    ( clk_hbmc_0     ),
+        .dst_rstn   ( hbmc_rstn_sync ),
+        .dst_data   ( dst_data       ),
+        .dst_req    ( cmd_req_dst    ),
+        .dst_ack    ( cmd_ack_dst    )
+    );
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    hbmc_ctrl #
     (
         .C_AXI_DATA_WIDTH           ( C_S_AXI_DATA_WIDTH         ),
         .C_HBMC_CLOCK_HZ            ( C_HBMC_CLOCK_HZ            ),
@@ -567,45 +590,47 @@ module axi_hbmc #
         .C_DQ1_IDELAY_TAPS_VALUE    ( C_DQ1_IDELAY_TAPS_VALUE    ),
         .C_DQ0_IDELAY_TAPS_VALUE    ( C_DQ0_IDELAY_TAPS_VALUE    )
     )
-    hbmc_inst
+    hbmc_ctrl_inst
     (
-        .arst               ( hbmc_rst              ),
+        .rstn               ( hbmc_rstn_sync        ),
         .clk_hbmc_0         ( clk_hbmc_0            ),
-        .clk_hbmc_270       ( clk_hbmc_270          ),
-        .clk_idelay_ref     ( clk_idelay_ref        ),
+        .clk_hbmc_90        ( clk_hbmc_90           ),
+        .clk_iserdes        ( clk_iserdes           ),
+        .clk_idelay_ref     ( clk_idelay            ),
         
         .cmd_req            ( cmd_req_dst           ),
         .cmd_ack            ( cmd_ack_dst           ),
         .cmd_mem_addr       ( cmd_mem_addr_dst      ),
-        .cmd_word_count     ( cmd_word_count_dst    ),
+        .cmd_word_count     ( cmd_word_cnt_dst      ),
         .cmd_wr_not_rd      ( cmd_wr_not_rd_dst     ),
         .cmd_wrap_not_incr  ( cmd_wrap_not_incr_dst ),
         
-        .fifo_dout          ( rfifo_wr_data ),
-        .fifo_dout_last     ( rfifo_wr_last ),
-        .fifo_dout_we       ( rfifo_wr_ena  ),
+        .fifo_dout          ( rfifo_wr_data         ),
+        .fifo_dout_last     ( rfifo_wr_last         ),
+        .fifo_dout_we       ( rfifo_wr_ena          ),
         
-        .fifo_din           ( wfifo_rd_data ),
-        .fifo_din_strb      ( wfifo_rd_strb ),
-        .fifo_din_re        ( wfifo_rd_ena  ),
+        .fifo_din           ( wfifo_rd_data         ),
+        .fifo_din_strb      ( wfifo_rd_strb         ),
+        .fifo_din_re        ( wfifo_rd_ena          ),
         
-        .hb_ck_p            ( hb_ck_p       ),
-        .hb_ck_n            ( hb_ck_n       ),
-        .hb_reset_n         ( hb_reset_n    ),
-        .hb_cs_n            ( hb_cs_n       ),
-        .hb_rwds            ( hb_rwds       ),
-        .hb_dq              ( hb_dq         )
+        .hb_ck_p            ( hb_ck_p               ),
+        .hb_ck_n            ( hb_ck_n               ),
+        .hb_reset_n         ( hb_reset_n            ),
+        .hb_cs_n            ( hb_cs_n               ),
+        .hb_rwds            ( hb_rwds               ),
+        .hb_dq              ( hb_dq                 )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    rfifo #
+    /* Read data FIFO */
+    hbmc_rfifo #
     (
-        .DATA_BUS_WIDTH ( C_S_AXI_DATA_WIDTH )
+        .DATA_WIDTH ( C_S_AXI_DATA_WIDTH )
     )
-    rfifo_inst
+    hbmc_rfifo_inst
     (
-        .fifo_arst      ( fifo_rst       ),
+        .fifo_arstn     ( s_axi_aresetn  ),
         
         .fifo_wr_clk    ( clk_hbmc_0     ),
         .fifo_wr_din    ( rfifo_wr_data  ),
@@ -615,20 +640,42 @@ module axi_hbmc #
         
         .fifo_rd_clk    ( s_axi_aclk     ),
         .fifo_rd_dout   ( rfifo_rd_dout  ),
+        .fifo_rd_free   ( rfifo_rd_free  ),
         .fifo_rd_last   ( rfifo_rd_last  ),
-        .fifo_rd_en     ( rfifo_rd_en    ),
+        .fifo_rd_ena    ( rfifo_rd_ena   ),
         .fifo_rd_empty  ( rfifo_rd_empty )
+    );
+    
+    
+    /* Read ID FIFO */
+    hbmc_id_fifo #
+    (
+        .AXI_ID_WIDTH ( C_S_AXI_ID_WIDTH )
+    )
+    hbmc_id_fifo_axi_ar
+    (
+        .fifo_clk       ( s_axi_aclk     ),
+        .fifo_rstn      ( s_axi_aresetn  ),
+        
+        .fifo_wr_din    ( s_axi_arid     ),
+        .fifo_wr_ena    ( fifo_arid_ena  ),
+        .fifo_wr_full   ( fifo_arid_full ),
+        
+        .fifo_rd_dout   ( s_axi_rid      ),
+        .fifo_rd_ena    ( fifo_rid_ena   ),
+        .fifo_rd_empty  ( /*----NC----*/ )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    wfifo #
+    /* Write data FIFO */
+    hbmc_wfifo #
     (
-        .DATA_BUS_WIDTH ( C_S_AXI_DATA_WIDTH )
+        .DATA_WIDTH ( C_S_AXI_DATA_WIDTH )
     )
-    wfifo_inst
+    hbmc_wfifo_inst
     (
-        .fifo_arst      ( fifo_rst       ),
+        .fifo_arstn     ( s_axi_aresetn  ),
     
         .fifo_wr_clk    ( s_axi_aclk     ),
         .fifo_wr_din    ( wfifo_wr_din   ),
@@ -639,9 +686,30 @@ module axi_hbmc #
         .fifo_rd_clk    ( clk_hbmc_0     ),
         .fifo_rd_dout   ( wfifo_rd_data  ),
         .fifo_rd_strb   ( wfifo_rd_strb  ),
-        .fifo_rd_en     ( wfifo_rd_ena   ),
+        .fifo_rd_ena    ( wfifo_rd_ena   ),
         .fifo_rd_empty  ( /*----NC----*/ )
     );
+    
+    
+    /* Write ID FIFO */
+    hbmc_id_fifo #
+    (
+        .AXI_ID_WIDTH ( C_S_AXI_ID_WIDTH )
+    )
+    hbmc_id_fifo_axi_aw
+    (
+        .fifo_clk       ( s_axi_aclk     ),
+        .fifo_rstn      ( s_axi_aresetn  ),
+        
+        .fifo_wr_din    ( s_axi_awid     ),
+        .fifo_wr_ena    ( fifo_awid_ena  ),
+        .fifo_wr_full   ( fifo_awid_full ),
+        
+        .fifo_rd_dout   ( s_axi_bid      ),
+        .fifo_rd_ena    ( fifo_bid_ena   ),
+        .fifo_rd_empty  ( /*----NC----*/ )
+    );
+    
     
 endmodule
 

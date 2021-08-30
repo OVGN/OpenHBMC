@@ -1,11 +1,11 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: hbmc.v
+ *  Filename: hbmc_ctrl.v
  *  Purpose:  HyperBus memory controller module. Includes FSMs that perform
  *            memory burst read/write and configuration registers access.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,42 +25,43 @@
 `timescale 1ps / 1ps
 
 
-module hbmc #
+module hbmc_ctrl #
 (
-    parameter C_AXI_DATA_WIDTH           = 32,
-    parameter C_HBMC_CLOCK_HZ            = 166000000,
-    parameter C_HBMC_FPGA_DRIVE_STRENGTH = 8,
-    parameter C_HBMC_FPGA_SLEW_RATE      = "SLOW",
-    parameter C_HBMC_MEM_DRIVE_STRENGTH  = 46,
-    parameter C_HBMC_CS_MAX_LOW_TIME_US  = 4,
-    parameter C_HBMC_FIXED_LATENCY       = 0,
-    parameter C_IODELAY_GROUP_ID         = "HBMC",
-    parameter C_IODELAY_REFCLK_MHZ       = 200.0,
+    parameter integer C_AXI_DATA_WIDTH           = 32,
+    parameter integer C_HBMC_CLOCK_HZ            = 166000000,
+    parameter integer C_HBMC_FPGA_DRIVE_STRENGTH = 8,
+    parameter         C_HBMC_FPGA_SLEW_RATE      = "SLOW",
+    parameter integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
+    parameter integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
+    parameter         C_HBMC_FIXED_LATENCY       = 0,
+    parameter         C_IODELAY_GROUP_ID         = "HBMC",
+    parameter real    C_IODELAY_REFCLK_MHZ       = 200.0,
     
-    parameter C_RWDS_USE_IDELAY          = 0,
-    parameter C_DQ7_USE_IDELAY           = 0,
-    parameter C_DQ6_USE_IDELAY           = 0,
-    parameter C_DQ5_USE_IDELAY           = 0,
-    parameter C_DQ4_USE_IDELAY           = 0,
-    parameter C_DQ3_USE_IDELAY           = 0,
-    parameter C_DQ2_USE_IDELAY           = 0,
-    parameter C_DQ1_USE_IDELAY           = 0,
-    parameter C_DQ0_USE_IDELAY           = 0,
+    parameter         C_RWDS_USE_IDELAY = 0,
+    parameter         C_DQ7_USE_IDELAY  = 0,
+    parameter         C_DQ6_USE_IDELAY  = 0,
+    parameter         C_DQ5_USE_IDELAY  = 0,
+    parameter         C_DQ4_USE_IDELAY  = 0,
+    parameter         C_DQ3_USE_IDELAY  = 0,
+    parameter         C_DQ2_USE_IDELAY  = 0,
+    parameter         C_DQ1_USE_IDELAY  = 0,
+    parameter         C_DQ0_USE_IDELAY  = 0,
     
-    parameter [4:0] C_RWDS_IDELAY_TAPS_VALUE = 0,
-    parameter [4:0] C_DQ7_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ6_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ5_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ4_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ3_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ2_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ1_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0] C_DQ0_IDELAY_TAPS_VALUE  = 0
+    parameter [4:0]   C_RWDS_IDELAY_TAPS_VALUE = 0,
+    parameter [4:0]   C_DQ7_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ6_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ5_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ4_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ3_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ2_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ1_IDELAY_TAPS_VALUE  = 0,
+    parameter [4:0]   C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
-    input   wire            arst,
+    input   wire            rstn,
     input   wire            clk_hbmc_0,
-    input   wire            clk_hbmc_270,
+    input   wire            clk_hbmc_90,
+    input   wire            clk_iserdes,
     input   wire            clk_idelay_ref,
     
     input   wire            cmd_req,
@@ -85,24 +86,10 @@ module hbmc #
     inout   wire            hb_rwds,
     inout   wire    [7:0]   hb_dq
 );
-    
+
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     /* Checking input parameters */
-    
-    generate
-        /* 
-         * Min clock frequency in current implementation is limited by max 
-         * delay value that IDELAYE2 module can provide to delay the RWDS
-         * strobe for the 1/4 of clock period for accurate incoming data 
-         * sampling. Upper frequency level is limited by memory part and 
-         * FPGA design timing capabilities.
-         */
-        if (C_HBMC_CLOCK_HZ < 100000000) begin
-            INVALID_PARAMETER invalid_parameter_msg();
-        end
-    endgenerate
-    
     
     generate
         /* 
@@ -146,7 +133,7 @@ module hbmc #
     
     localparam  integer MIN_RWR = INITIAL_LATENCY;                                  /* Min Read-Write recovery time */
     
-    localparam  integer MAX_BURST_COUNT = ((C_HBMC_CS_MAX_LOW_TIME_US * 1000) / HBMC_CLOCK_PERIOD_NS - INITIAL_LATENCY * 3);    // x3 - is a margin
+    localparam  integer MAX_BURST_COUNT = ((C_HBMC_CS_MAX_LOW_TIME_US * 1000) / HBMC_CLOCK_PERIOD_NS - INITIAL_LATENCY * 3);    /* x3 - is a margin */
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -246,9 +233,8 @@ module hbmc #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  SINGLE_LATENCY  = ((INITIAL_LATENCY >= 3) && (INITIAL_LATENCY <= 5))? INITIAL_LATENCY : 6;
-    
-    localparam  DUAL_LATENCY    = SINGLE_LATENCY * 2;
+    localparam  SINGLE_LATENCY  = INITIAL_LATENCY;
+    localparam  DUAL_LATENCY    = INITIAL_LATENCY * 2;
     
     localparam  DQ_DIR_OUTPUT   = 8'h00,
                 DQ_DIR_INPUT    = 8'hff;
@@ -262,8 +248,7 @@ module hbmc #
                 WRAPPED_BURST_16_BYTE   = 8,
                 WRAPPED_BURST_32_BYTE   = 16,
                 WRAPPED_BURST_64_BYTE   = 32,
-                WRAPPED_BURST_128_BYTE  = 64,
-                WRAPPED_BURST_UNDEFINED = 0;
+                WRAPPED_BURST_128_BYTE  = 64;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -278,42 +263,44 @@ module hbmc #
                         };
         end
     endfunction
-
+    
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    reg     [15:0]  cr0_reg = CR0_INIT;
-    reg     [15:0]  cr1_reg = CR1_INIT;
+    reg     [15:0]  cr0_reg;
+    reg     [15:0]  cr1_reg;
     
-                            reg             reset_n         = 1'b0;
-                            reg             cs_n            = 1'b1;
-                            reg             cen             = 1'b0;
-                            reg     [1:0]   rwds_sdr_i      = 2'b00;
-                            reg             rwds_t          = RWDS_DIR_INPUT;
-                            reg     [15:0]  dq_sdr_i        = 16'h0000;
-    (* KEEP  = "TRUE" *)    reg     [7:0]   dq_t            = DQ_DIR_INPUT;
-                            reg             rd_srst         = 1'b1;
-                            reg     [7:0]   latency_tc      = 8'h00;
-                            reg     [7:0]   rwr_tc          = 8'h00;
-                            reg     [15:0]  power_up_tc     = 16'h0000;
-                            reg     [15:0]  hram_id_reg     = 16'h0000;
-                            reg             fifo_rd         = 1'b0;
-                            reg             mem_access      = 1'b0;
-                            reg             word_last       = 1'b0;
-                            reg     [47:0]  ca              = {32{1'b0}};
-                            reg     [15:0]  burst_cnt       = {16{1'b0}};
-                            reg     [15:0]  burst_size      = {16{1'b0}};
-                            reg     [15:0]  word_count      = {16{1'b0}};
-                            reg     [15:0]  word_count_prev = {16{1'b0}};
-                            reg     [31:0]  mem_addr        = {32{1'b0}};
-                            reg             wr_not_rd       = 1'b0;
-                            reg             wrap_not_incr   = 1'b0;
     
-    wire            srst;
+                        reg             reset_n;
+                        reg             cs_n;
+                        reg             cen;
+                        reg     [1:0]   rwds_sdr_i;
+                        reg             rwds_t;
+                        reg     [15:0]  dq_sdr_i;
+    (* KEEP = "TRUE" *) reg     [7:0]   dq_t;
+                        reg             dru_ena;
+                        reg     [7:0]   latency_tc;
+                        reg     [7:0]   rwr_tc;
+                        reg     [15:0]  power_up_tc;
+                        reg     [15:0]  hram_id_reg;
+                        reg             fifo_rd;
+                        reg             mem_access;
+                        reg             word_last;
+                        reg     [47:0]  ca;
+                        reg     [15:0]  burst_cnt;
+                        reg     [15:0]  burst_size;
+                        reg     [15:0]  word_count;
+                        reg     [15:0]  word_count_prev;
+                        reg     [31:0]  mem_addr;
+                        reg             wr_not_rd;
+                        reg             wrap_not_incr;
     
-    wire    [15:0]  dq_sdr_o;
-    wire    [7:0]   dq_sdr_o_vld;
-    wire            rwds_delayed;
-        
+    
+    wire    [5:0]   rwds_iserdes;
+    wire    [47:0]  data_iserdes;
+    
+    wire    [5:0]   rwds_resync;
+    wire    [47:0]  data_resync;
+    
     wire            hb_recov_data_vld;
     wire    [15:0]  hb_recov_data;
     
@@ -327,57 +314,94 @@ module hbmc #
     assign fifo_din_re = fifo_rd;
     
     assign fifo_dout = hb_recov_data;
-    assign fifo_dout_we  = hb_recov_data_vld & mem_access;
+    assign fifo_dout_we = hb_recov_data_vld & mem_access;
     assign fifo_dout_last = word_last;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    hb_clk_obuf #
+    hbmc_clk_obuf #
     (
         .DRIVE_STRENGTH ( C_HBMC_FPGA_DRIVE_STRENGTH ),
         .SLEW_RATE      ( C_HBMC_FPGA_SLEW_RATE      )
     )
-    hb_clk_obuf_inst
+    hbmc_clk_obuf_inst
     (
-        .cen     ( cen          ),
-        .clk     ( clk_hbmc_270 ),
-        .hb_ck_p ( hb_ck_p      ),
-        .hb_ck_n ( hb_ck_n      )
+        .cen     ( cen         ),
+        .clk     ( clk_hbmc_90 ),
+        .hb_ck_p ( hb_ck_p     ),
+        .hb_ck_n ( hb_ck_n     )
+    );
+    
+/*----------------------------------------------------------------------------------------------------------------------------*/
+ 
+    wire    iserdes_clk_iobuf;
+    
+    
+    BUFIO
+    BUFIO_inst
+    (
+        .I  ( clk_iserdes       ),
+        .O  ( iserdes_clk_iobuf )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    hb_rwds_iobuf #
+    wire    iserdes_clkdiv;
+    
+    
+    BUFR #
+    (
+        .BUFR_DIVIDE ( "3"       ), // Values: "BYPASS, 1, 2, 3, 4, 5, 6, 7, 8"
+        .SIM_DEVICE  ( "7SERIES" )  // Must be set to "7SERIES"
+    )
+    BUFR_inst_0
+    (
+        .I   ( clk_iserdes      ),  // 1-bit input: Clock buffer input driven by an IBUF, MMCM or local interconnect
+        .CE  ( 1'b1             ),  // 1-bit input: Active high, clock enable (Divided modes only)
+        .CLR ( 1'b0             ),  // 1-bit input: Active high, asynchronous clear (Divided modes only)
+        .O   ( iserdes_clkdiv   )   // 1-bit output: Clock output port
+    );
+    
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    wire    rwds_imm;
+    
+    
+    hbmc_iobuf #
     (
         .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH  ),
         .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE       ),
+        .USE_IDELAY_PRIMITIVE   ( C_RWDS_USE_IDELAY           ),
         .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ        ),
         .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID          ),
-        .USE_IDELAY_PRIMITIVE   ( C_RWDS_USE_IDELAY           ),
         .IDELAY_TAPS_VALUE      ( C_RWDS_IDELAY_TAPS_VALUE    )
     )
-    hb_rwds_iobuf_inst
+    hbmc_iobuf_rwds
     (
-        .oddr_clk     ( clk_hbmc_0     ),
-        .idelay_clk   ( clk_idelay_ref ),
+        .arstn          ( rstn              ),
+        .oddr_clk       ( clk_hbmc_0        ),
+        .iserdes_clk    ( iserdes_clk_iobuf ),
+        .iserdes_clkdiv ( iserdes_clkdiv    ),
+        .idelay_clk     ( clk_idelay_ref    ),
         
-        .buf_io       ( hb_rwds        ),
-        .buf_t        ( rwds_t         ),
-        .sdr_i        ( ~rwds_sdr_i    ),
-        .rwds_delayed ( rwds_delayed   )
+        .buf_io         ( hb_rwds           ),
+        .buf_t          ( rwds_t            ),
+        .sdr_i          ( ~rwds_sdr_i       ),
+        .iserdes_o      ( rwds_iserdes      ),
+        .iserdes_comb_o ( rwds_imm          )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     localparam  [7:0]   C_DQ_VECT_USE_IDELAY_PRIMITIVE = {
-                                                             C_DQ7_USE_IDELAY,
-                                                             C_DQ6_USE_IDELAY,
-                                                             C_DQ5_USE_IDELAY,
-                                                             C_DQ4_USE_IDELAY,
-                                                             C_DQ3_USE_IDELAY,
-                                                             C_DQ2_USE_IDELAY,
-                                                             C_DQ1_USE_IDELAY,
-                                                             C_DQ0_USE_IDELAY
+                                                             (C_DQ7_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ6_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ5_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ4_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ3_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ2_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ1_USE_IDELAY)? 1'b1 : 1'b0,
+                                                             (C_DQ0_USE_IDELAY)? 1'b1 : 1'b0
                                                          };
     
     localparam  [39:0]  C_DQ_VECT_IDELAY_TAPS_VALUE =   {
@@ -393,287 +417,244 @@ module hbmc #
     
     generate
         for (i = 0; i < 8; i = i + 1) begin : dq
-            hb_dq_iobuf #
+            hbmc_iobuf #
             (
                 .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH                  ),
                 .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE                       ),
+                .USE_IDELAY_PRIMITIVE   ( C_DQ_VECT_USE_IDELAY_PRIMITIVE[i]           ),
                 .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ                        ),
                 .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID                          ),
-                .USE_IDELAY_PRIMITIVE   ( C_DQ_VECT_USE_IDELAY_PRIMITIVE[i]           ),
                 .IDELAY_TAPS_VALUE      ( C_DQ_VECT_IDELAY_TAPS_VALUE[i*5 + 4 : i*5 ] )
             )
-            hb_dq_iobuf_inst
+            hbmc_iobuf_dq
             (
-                .arst       ( rd_srst         ),
-                .oddr_clk   ( clk_hbmc_0      ),
-                .iddr_clk   ( rwds_delayed    ),
-                .idelay_clk ( clk_idelay_ref  ),
+                .arstn          ( rstn              ),
+                .oddr_clk       ( clk_hbmc_0        ),
+                .iserdes_clk    ( iserdes_clk_iobuf ),
+                .iserdes_clkdiv ( iserdes_clkdiv    ),
+                .idelay_clk     ( clk_idelay_ref    ),
                 
-                .buf_io     ( hb_dq[i]        ),
-                .buf_t      ( dq_t[i]         ),
-                .sdr_i      ( {dq_sdr_i[i + 8], dq_sdr_i[i]} ),
-                .sdr_o      ( {dq_sdr_o[i + 8], dq_sdr_o[i]} ),
-                .sdr_o_vld  ( dq_sdr_o_vld[i] )
+                .buf_io         ( hb_dq[i]                        ),
+                .buf_t          ( dq_t[i]                         ),
+                .sdr_i          ( {dq_sdr_i[i + 8], dq_sdr_i[i]}  ),
+                .iserdes_o      ( data_iserdes[i * 6 + 5 : i * 6] ),
+                .iserdes_comb_o ( /*------------NC------------*/  )
             );
         end
     endgenerate
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    hb_elastic_buf hb_elastic_buf_inst
+    hbmc_elastic_buf #
     (
-        .clk_din    ( ~rwds_delayed     ),
-        .din        ( dq_sdr_o          ),
-        .din_vld    ( &dq_sdr_o_vld     ),
-        
-        .srst       ( rd_srst           ),
-        .clk_dout   ( clk_hbmc_0        ),
-        .dout       ( hb_recov_data     ),
-        .dout_vld   ( hb_recov_data_vld )
-    );
-
-/*----------------------------------------------------------------------------------------------------------------------------*/
-    
-    sync_cdc_bit #(.C_SYNC_STAGES(3)) arst_sync
+        .DATA_WIDTH ( 54 )   // 8x6 bit of data + 6 bit of RWDS
+    )
+    hbmc_elastic_buf_inst
     (
-        .clk    ( clk_hbmc_0 ),
-        .d      ( arst       ),
-        .q      ( srst       )
+        .arstn    ( rstn                         ),
+        .clk_din  ( iserdes_clkdiv               ),
+        .clk_dout ( clk_hbmc_0                   ),
+        .din      ( {rwds_iserdes, data_iserdes} ),
+        .dout     ( {rwds_resync, data_resync}   )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
-
-    localparam  [2:0]   ST_WR_REG_0             = 3'd0,
-                        ST_WR_REG_1             = 3'd1,
-                        ST_WR_REG_2             = 3'd2,
-                        ST_WR_REG_3             = 3'd3,
-                        ST_WR_REG_4             = 3'd4,
-                        ST_WR_REG_5             = 3'd5,
-                        ST_WR_REG_6             = 3'd6,
-                        ST_WR_REG_DONE          = 3'd7,
-                        FSM_WR_REG_RESET_STATE  = ST_WR_REG_0;
     
-    reg         [2:0]   wr_reg_state = FSM_WR_REG_RESET_STATE;
-    wire                wr_reg_done  = (wr_reg_state == ST_WR_REG_DONE);
-
-    task wr_reg;
-        input   [47:0]  cmd;
-        input   [15:0]  reg_data;
-    begin
-        case (wr_reg_state)
-            
-            ST_WR_REG_0: begin
-                if (rwr_tc >= MIN_RWR) begin
-                    wr_reg_state <= ST_WR_REG_1;
-                end
-            end
-            
-            ST_WR_REG_1: begin
-                cs_n     <= 1'b0;
-                cen      <= 1'b1;
-                rwds_t   <= RWDS_DIR_INPUT;
-                dq_t     <= DQ_DIR_OUTPUT;
-                dq_sdr_i <= cmd[47:32];
-                wr_reg_state <= ST_WR_REG_2;
-            end
-            
-            ST_WR_REG_2: begin
-                dq_sdr_i <= cmd[31:16];
-                wr_reg_state <= ST_WR_REG_3;
-            end
-            
-            ST_WR_REG_3: begin
-                dq_sdr_i <= cmd[15:0];
-                wr_reg_state <= ST_WR_REG_4;
-            end
-            
-            ST_WR_REG_4: begin
-                dq_sdr_i <= reg_data;
-                wr_reg_state <= ST_WR_REG_5;
-            end
-            
-            ST_WR_REG_5: begin
-                cen  <= 1'b0;
-                dq_t <= DQ_DIR_INPUT;
-                wr_reg_state <= ST_WR_REG_6;
-            end
-            
-            ST_WR_REG_6: begin
-                cs_n <= 1'b1;
-                wr_reg_state <= ST_WR_REG_DONE;
-            end
-            
-            ST_WR_REG_DONE: begin
-                wr_reg_state <= FSM_WR_REG_RESET_STATE;
-            end
-            
-            default: begin
-                wr_reg_state <= FSM_WR_REG_RESET_STATE;
-            end
-        endcase
-    end
-    endtask
+    hbmc_dru
+    hbmc_dru_inst
+    (
+        .clk                ( clk_hbmc_0        ),
+        .arstn              ( rstn & dru_ena    ),
+        .rwds_oversampled   ( rwds_resync       ),
+        .data_oversampled   ( data_resync       ),
+        .recov_valid        ( hb_recov_data_vld ),
+        .recov_data         ( hb_recov_data     )
+    );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  [2:0]   ST_WR_BURST_0             = 3'd0,
-                        ST_WR_BURST_1             = 3'd1,
-                        ST_WR_BURST_2             = 3'd2,
-                        ST_WR_BURST_3             = 3'd3,
-                        ST_WR_BURST_4             = 3'd4,
-                        ST_WR_BURST_5             = 3'd5,
-                        ST_WR_BURST_6             = 3'd6,
-                        ST_WR_BURST_DONE          = 3'd7,
-                        FSM_WR_BURST_RESET_STATE  = ST_WR_BURST_0;
+    localparam  [2:0]   ST_WR_0            = 3'd0,
+                        ST_WR_1            = 3'd1,
+                        ST_WR_2            = 3'd2,
+                        ST_WR_3            = 3'd3,
+                        ST_WR_4            = 3'd4,
+                        ST_WR_5            = 3'd5,
+                        ST_WR_6            = 3'd6,
+                        ST_WR_DONE         = 3'd7,
+                        FSM_WR_RESET_STATE = ST_WR_0;
     
-    reg         [2:0]   wr_burst_state = FSM_WR_BURST_RESET_STATE;
-    wire                wr_burst_done  = (wr_burst_state == ST_WR_BURST_DONE);
-
-    task wr_burst;
-        input   [47:0]  cmd;
-        input   [15:0]  wr_burst_size;
+    reg         [2:0]   wr_state;
+    wire                wr_done  = (wr_state == ST_WR_DONE);
+    
+    
+    task wr_xfer;
+        input wire [47:0] cmd;
+        input wire [15:0] wr_size;
+        input wire [15:0] reg_data;
     begin
-        case (wr_burst_state)
+        case (wr_state)
             
-            ST_WR_BURST_0: begin
+            ST_WR_0: begin
                 if (rwr_tc >= MIN_RWR) begin
                     cs_n       <= 1'b0;
                     cen        <= 1'b1;
                     rwds_t     <= RWDS_DIR_INPUT;
                     dq_t       <= DQ_DIR_OUTPUT;
-                    burst_cnt  <= 16'd1;            // Not zero, as FIFO is FWFT (first word falls through)
+                    burst_cnt  <= 16'd1;            // Not zero, as FIFO is FWFT (First Word Falls Through)
                     dq_sdr_i   <= cmd[47:32];
                     rwds_sdr_i <= 2'b00;
-                    wr_burst_state <= ST_WR_BURST_1;
+                    wr_state   <= ST_WR_1;
                 end
             end
             
-            ST_WR_BURST_1: begin
+            ST_WR_1: begin
                 dq_sdr_i <= cmd[31:16];
-                wr_burst_state <= ST_WR_BURST_2;
+                wr_state <= ST_WR_2;
             end
             
-            ST_WR_BURST_2: begin
+            ST_WR_2: begin
                 dq_sdr_i <= cmd[15:0];
-                wr_burst_state <= ST_WR_BURST_3;
+                wr_state <= ST_WR_3;
             end
             
-            ST_WR_BURST_3: begin
-                latency_tc <= (rwds_delayed)? DUAL_LATENCY - 3 : SINGLE_LATENCY - 3;
-                wr_burst_state <= ST_WR_BURST_4;
+            ST_WR_3: begin
+                if (cmd & CA_REG_SPACE) begin
+                    dq_sdr_i <= reg_data;
+                    wr_state <= ST_WR_6;
+                end else begin
+                    latency_tc <= (rwds_imm)? DUAL_LATENCY - 3 : SINGLE_LATENCY - 3;
+                    wr_state <= ST_WR_4;
+                end
             end
             
-            ST_WR_BURST_4: begin
+            ST_WR_4: begin
                 if (latency_tc == 8'h00) begin
-                    fifo_rd <= 1'b1;
-                    rwds_t <= RWDS_DIR_OUTPUT;
-                    wr_burst_state <= ST_WR_BURST_5;
+                    fifo_rd  <= 1'b1;
+                    rwds_t   <= RWDS_DIR_OUTPUT;
+                    wr_state <= ST_WR_5;
                 end else begin
                     latency_tc <= latency_tc - 1'b1;
                 end
             end
             
-            ST_WR_BURST_5: begin
+            ST_WR_5: begin
                 dq_sdr_i   <= fifo_din;
                 rwds_sdr_i <= fifo_din_strb;
-                if (burst_cnt == wr_burst_size) begin
-                    fifo_rd <= 1'b0;
-                    wr_burst_state <= ST_WR_BURST_6;
+                if (burst_cnt == wr_size) begin
+                    fifo_rd  <= 1'b0;
+                    wr_state <= ST_WR_6;
                 end else begin
                     burst_cnt <= burst_cnt + 1'b1;
                 end
             end
             
-            ST_WR_BURST_6: begin
-                cen    <= 1'b0;
-                dq_t   <= DQ_DIR_INPUT;
-                rwds_t <= RWDS_DIR_INPUT;
-                wr_burst_state <= ST_WR_BURST_DONE;
+            ST_WR_6: begin
+                cen      <= 1'b0;
+                dq_t     <= DQ_DIR_INPUT;
+                rwds_t   <= RWDS_DIR_INPUT;
+                wr_state <= ST_WR_DONE;
             end
             
-            ST_WR_BURST_DONE: begin
+            ST_WR_DONE: begin
                 cs_n <= 1'b1;
-                wr_burst_state <= FSM_WR_BURST_RESET_STATE;
+                wr_state <= FSM_WR_RESET_STATE;
             end
         endcase
     end
     endtask
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
+
+    localparam  [3:0]   ST_RD_0            = 4'd0,
+                        ST_RD_1            = 4'd1,
+                        ST_RD_2            = 4'd2,
+                        ST_RD_3            = 4'd3,
+                        ST_RD_4            = 4'd4,
+                        ST_RD_5            = 4'd5,
+                        ST_RD_6            = 4'd6,
+                        ST_RD_7            = 4'd7,
+                        ST_RD_8            = 4'd8,
+                        ST_RD_DONE         = 4'd9,
+                        FSM_RD_RESET_STATE = ST_RD_0;
     
-    localparam  [2:0]   ST_RD_REG_0             = 3'd0,
-                        ST_RD_REG_1             = 3'd1,
-                        ST_RD_REG_2             = 3'd2,
-                        ST_RD_REG_3             = 3'd3,
-                        ST_RD_REG_4             = 3'd4,
-                        ST_RD_REG_5             = 3'd5,
-                        ST_RD_REG_6             = 3'd6,
-                        ST_RD_REG_DONE          = 3'd7,
-                        FSM_RD_REG_RESET_STATE  = ST_RD_REG_0;
+    reg         [3:0]   rd_state;
+    wire                rd_done  = (rd_state == ST_RD_DONE);
     
-    reg         [2:0]   rd_reg_state = FSM_RD_REG_RESET_STATE;
-    wire                rd_reg_done  = (rd_reg_state == ST_RD_REG_DONE);
     
-    task rd_reg;
-        input       [47:0]  cmd;
-        output  reg [15:0]  reg_data;
+    task rd_xfer;
+        input  wire [47:0] cmd;
+        input  wire [15:0] rd_size;
+        output reg  [15:0] reg_data;   // register access output value
     begin
     
-        case (rd_reg_state)
-            ST_RD_REG_0: begin
+        case (rd_state)
+            ST_RD_0: begin
                 if (rwr_tc >= MIN_RWR) begin
-                    rd_reg_state <= ST_RD_REG_1;
+                    cs_n      <= 1'b0;
+                    cen       <= 1'b1;
+                    dru_ena   <= 1'b1;
+                    burst_cnt <= 16'd0;
+                    rwds_t    <= RWDS_DIR_INPUT;
+                    dq_t      <= DQ_DIR_OUTPUT;
+                    dq_sdr_i  <= cmd[47:32];
+                    rd_state  <= ST_RD_1;
                 end
             end
             
-            ST_RD_REG_1: begin
-                cs_n         <= 1'b0;
-                cen          <= 1'b1;
-                rd_srst      <= 1'b1;
-                mem_access   <= 1'b0;
-                rwds_t       <= RWDS_DIR_INPUT;
-                dq_t         <= DQ_DIR_OUTPUT;
-                dq_sdr_i     <= cmd[47:32];
-                rd_reg_state <= ST_RD_REG_2;
-            end
-            
-            ST_RD_REG_2: begin
+            ST_RD_1: begin
                 dq_sdr_i <= cmd[31:16];
-                rd_reg_state <= ST_RD_REG_3;
+                rd_state <= ST_RD_2;
             end
             
-            ST_RD_REG_3: begin
+            ST_RD_2: begin
                 dq_sdr_i <= cmd[15:0];
-                rd_reg_state <= ST_RD_REG_4;
+                rd_state <= ST_RD_3;
             end
             
-            ST_RD_REG_4: begin
-                latency_tc <= (rwds_delayed)? DUAL_LATENCY - 3 : SINGLE_LATENCY - 3;
-                rd_reg_state <= ST_RD_REG_5;
+            ST_RD_3: begin
+                latency_tc <= (rwds_imm)? DUAL_LATENCY - 3 : SINGLE_LATENCY - 3;
+                rd_state   <= ST_RD_4;
             end
             
-            ST_RD_REG_5: begin
+            ST_RD_4: begin
                 if (latency_tc == 8'h00) begin
-                    rd_srst <= 1'b0;
                     dq_t <= DQ_DIR_INPUT;
-                    rd_reg_state <= ST_RD_REG_6;
+                    rd_state <= ST_RD_5;
                 end else begin
                     latency_tc <= latency_tc - 1'b1;
                 end
             end
             
-            ST_RD_REG_6: begin
+            ST_RD_5: begin
+                if (burst_cnt == rd_size) begin
+                    cen <= 1'b0;
+                    rd_state <= ST_RD_6;
+                end else begin
+                    burst_cnt <= burst_cnt + 1'b1;
+                end
+            end
+            
+            ST_RD_6: begin
+                rd_state <= ST_RD_7;
+            end
+            
+            ST_RD_7: begin
+                cs_n <= 1'b1;
                 if (hb_recov_data_vld) begin
-                    cen  <= 1'b0;
-                    cs_n <= 1'b1;
-                    rd_srst <= 1'b1;
                     reg_data <= hb_recov_data;
-                    rd_reg_state <= ST_RD_REG_DONE;
+                    rd_state <= ST_RD_8;
                 end
             end
             
-            ST_RD_REG_DONE: begin
-                rd_reg_state <= FSM_RD_REG_RESET_STATE;
+            ST_RD_8: begin
+                if (~hb_recov_data_vld) begin
+                    dru_ena  <= 1'b0;
+                    rd_state <= ST_RD_DONE;
+                end
+            end
+            
+            ST_RD_DONE: begin
+                rd_state <= FSM_RD_RESET_STATE;
             end
         endcase
     end
@@ -681,102 +662,45 @@ module hbmc #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
-    localparam  [3:0]   ST_RD_BURST_0            = 4'd0,
-                        ST_RD_BURST_1            = 4'd1,
-                        ST_RD_BURST_2            = 4'd2,
-                        ST_RD_BURST_3            = 4'd3,
-                        ST_RD_BURST_4            = 4'd4,
-                        ST_RD_BURST_5            = 4'd5,
-                        ST_RD_BURST_6            = 4'd6,
-                        ST_RD_BURST_7            = 4'd7,
-                        ST_RD_BURST_8            = 4'd8,
-                        ST_RD_BURST_9            = 4'd9,
-                        ST_RD_BURST_DONE         = 4'd10,
-                        FSM_RD_BURST_RESET_STATE = ST_RD_BURST_0;
-    
-    reg         [3:0]   rd_burst_state = FSM_RD_BURST_RESET_STATE;
-    wire                rd_burst_done  = (rd_burst_state == ST_RD_BURST_DONE);
-    
-    task rd_burst;
-        input   [47:0]  cmd;
-        input   [15:0]  rd_burst_size;
+    task wr_reg;
+        input wire [47:0] cmd;
+        input wire [15:0] reg_data;
     begin
-    
-        case (rd_burst_state)
-            ST_RD_BURST_0: begin
-                if (rwr_tc >= MIN_RWR) begin
-                    cs_n       <= 1'b0;
-                    cen        <= 1'b1;
-                    rd_srst    <= 1'b1;
-                    mem_access <= 1'b1;
-                    rwds_t     <= RWDS_DIR_INPUT;
-                    dq_t       <= DQ_DIR_OUTPUT;
-                    burst_cnt  <= 16'd0;
-                    dq_sdr_i   <= cmd[47:32];
-                    rd_burst_state <= ST_RD_BURST_1;
-                end
-            end
-            
-            ST_RD_BURST_1: begin
-                dq_sdr_i <= cmd[31:16];
-                rd_burst_state <= ST_RD_BURST_2;
-            end
-            
-            ST_RD_BURST_2: begin
-                dq_sdr_i <= cmd[15:0];
-                rd_burst_state <= ST_RD_BURST_3;
-            end
-            
-            ST_RD_BURST_3: begin
-                latency_tc <= (rwds_delayed)? DUAL_LATENCY - 3 : SINGLE_LATENCY - 3;
-                rd_burst_state <= ST_RD_BURST_4;
-            end
-            
-            ST_RD_BURST_4: begin
-                if (latency_tc == 8'h00) begin
-                    rd_srst <= 1'b0;
-                    dq_t <= DQ_DIR_INPUT;
-                    rd_burst_state <= ST_RD_BURST_5;
-                end else begin
-                    latency_tc <= latency_tc - 1'b1;
-                end
-            end
-            
-            ST_RD_BURST_5: begin
-                if (burst_cnt == rd_burst_size) begin
-                    rd_burst_state <= ST_RD_BURST_6;
-                end else begin
-                    burst_cnt <= burst_cnt + 1'b1;
-                end
-            end
-            
-            ST_RD_BURST_6: begin
-                rd_burst_state <= ST_RD_BURST_7;
-            end
-            
-            ST_RD_BURST_7: begin
-                rd_burst_state <= ST_RD_BURST_8;
-            end
-            
-            ST_RD_BURST_8: begin
-                cen  <= 1'b0;
-                cs_n <= 1'b1;
-                if (hb_recov_data_vld) begin
-                    rd_burst_state <= ST_RD_BURST_9;
-                end
-            end
-            
-            ST_RD_BURST_9: begin
-                if (~hb_recov_data_vld) begin
-                    rd_srst <= 1'b1;
-                    rd_burst_state <= ST_RD_BURST_DONE;
-                end
-            end
-            
-            ST_RD_BURST_DONE: begin
-                rd_burst_state <= FSM_RD_BURST_RESET_STATE;
-            end
-        endcase
+        wr_xfer(cmd, 16'd2, reg_data);
+    end
+    endtask
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    task rd_reg;
+        input  wire [47:0] cmd;
+        output reg  [15:0] reg_data;
+    begin
+        mem_access <= 1'b0;
+        rd_xfer(cmd, 16'd1, reg_data);
+    end
+    endtask
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    task wr_burst;
+        input wire [47:0] cmd;
+        input wire [15:0] wr_size;
+    begin
+        wr_xfer(cmd, wr_size, 16'h0000);
+    end
+    endtask
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    task rd_burst;
+        input wire [47:0] cmd;
+        input wire [15:0] rd_size;
+        
+        reg [15:0]  dummy_reg;
+    begin
+        mem_access <= 1'b1;
+        rd_xfer(cmd, rd_size, dummy_reg);
     end
     endtask
 
@@ -784,11 +708,8 @@ module hbmc #
 
     task local_rst;
     begin
-        wr_reg_state    <= FSM_WR_REG_RESET_STATE;
-        rd_reg_state    <= FSM_RD_REG_RESET_STATE;
-        
-        wr_burst_state  <= FSM_WR_BURST_RESET_STATE;
-        rd_burst_state  <= FSM_RD_BURST_RESET_STATE;
+        wr_state        <= FSM_WR_RESET_STATE;
+        rd_state        <= FSM_RD_RESET_STATE;
         
         cr0_reg         <= CR0_INIT;
         cr1_reg         <= CR1_INIT;
@@ -796,14 +717,25 @@ module hbmc #
         reset_n         <= 1'b0;
         cs_n            <= 1'b1;
         cen             <= 1'b0;
+        rwds_sdr_i      <= 2'b00;
         rwds_t          <= RWDS_DIR_INPUT;
+        dq_sdr_i        <= {16{1'b0}};
         dq_t            <= DQ_DIR_INPUT;
-        rd_srst         <= 1'b1;
-        cmd_ack         <= 1'b0;
-        power_up_tc     <= 16'h0000;
+        dru_ena         <= 1'b0;
+        latency_tc      <=  {8{1'b0}};
+        power_up_tc     <= {16{1'b0}};
+        hram_id_reg     <= {16{1'b0}};
         fifo_rd         <= 1'b0;
+        mem_access      <= 1'b0;
         word_last       <= 1'b0;
-        word_count_prev <= WRAPPED_BURST_UNDEFINED;
+        ca              <= {48{1'b0}};
+        burst_cnt       <= {16{1'b0}};
+        burst_size      <= {16{1'b0}};
+        word_count      <= {16{1'b0}};
+        word_count_prev <= {16{1'b0}};
+        mem_addr        <= {32{1'b0}};
+        wr_not_rd       <= 1'b0;
+        wrap_not_incr   <= 1'b0;
     end
     endtask
     
@@ -835,8 +767,8 @@ module hbmc #
     reg         [3:0]   state = ST_RST;
     
     
-    always @(posedge clk_hbmc_0) begin
-        if (srst) begin
+    always @(posedge clk_hbmc_0 or negedge rstn) begin
+        if (~rstn) begin
             local_rst();
             state <= ST_RST;
         end else begin
@@ -849,7 +781,7 @@ module hbmc #
                 
                 
                 ST_POR_DELAY: begin
-                    reset_n  <= 1'b1;
+                    reset_n <= 1'b1;
                     if (power_up_tc == MEM_POWER_UP_DELAY) begin
                         state <= ST_SETUP_CR0;
                     end else begin
@@ -860,26 +792,26 @@ module hbmc #
                 
                 ST_SETUP_CR0: begin
                     wr_reg(CA_WR | CA_REG_SPACE | CA_BURST_LINEAR | CR0_REG_ADDR, cr0_reg);
-                    state <= (wr_reg_done)? ST_SETUP_CR1 : state;
+                    state <= (wr_done)? ST_SETUP_CR1 : state;
                 end
                 
                 
                 ST_SETUP_CR1: begin
                     wr_reg(CA_WR | CA_REG_SPACE | CA_BURST_LINEAR | CR1_REG_ADDR, cr1_reg);
-                    state <= (wr_reg_done)? ST_READ_ID0 : state;
+                    state <= (wr_done)? ST_IDLE : state;
                 end
                 
                 
-                ST_READ_ID0: begin
-                    rd_reg(CA_RD | CA_REG_SPACE | CA_BURST_LINEAR | ID0_REG_ADDR, hram_id_reg);
-                    state <= (rd_reg_done)? ST_READ_ID1 : state;
-                end
-                
-                
-                ST_READ_ID1: begin
-                    rd_reg(CA_RD | CA_REG_SPACE | CA_BURST_LINEAR | ID1_REG_ADDR, hram_id_reg);
-                    state <= (rd_reg_done)? ST_IDLE : state;
-                end
+                // ST_READ_ID0: begin
+                //     rd_reg(CA_RD | CA_REG_SPACE | CA_BURST_LINEAR | ID0_REG_ADDR, hram_id_reg);
+                //     state <= (rd_done)? ST_READ_ID1 : state;
+                // end
+                // 
+                // 
+                // ST_READ_ID1: begin
+                //     rd_reg(CA_RD | CA_REG_SPACE | CA_BURST_LINEAR | ID1_REG_ADDR, hram_id_reg);
+                //     state <= (rd_done)? ST_IDLE : state;
+                // end
                 
                 
                 ST_IDLE: begin
@@ -897,11 +829,8 @@ module hbmc #
                 
                 ST_CMD_PREPARE: begin
                     ca <= ((wr_not_rd)? CA_WR : CA_RD) | CA_MEM_SPACE | ((wrap_not_incr)? CA_BURST_WRAPPED : CA_BURST_LINEAR);
-                    
-                    if (~cmd_req) begin
-                        cmd_ack <= 1'b0;
-                        state <= (wrap_not_incr)? ST_CHECK_WRAP_BURST_SIZE : ST_BURST_INIT;
-                    end
+                    cmd_ack <= 1'b0;
+                    state <= (wrap_not_incr)? ST_CHECK_WRAP_BURST_SIZE : ST_BURST_INIT;
                 end
                 
                 
@@ -956,7 +885,7 @@ module hbmc #
                 /* Write new wrapped burst size value to CR0 */
                 ST_CONFIG_WRAP_BURST_SIZE: begin
                     wr_reg(CA_WR | CA_REG_SPACE | CA_BURST_LINEAR | CR0_REG_ADDR, cr0_reg);
-                    state <= (wr_reg_done)? ST_BURST_INIT : state;
+                    state <= (wr_done)? ST_BURST_INIT : state;
                 end
                 
                 
@@ -964,10 +893,10 @@ module hbmc #
                 ST_WRAP_BURST_8BYTE_XFER_FIRST: begin
                     if (wr_not_rd) begin
                         wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
-                        state <= (wr_burst_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
+                        state <= (wr_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
                     end else begin
                         rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
-                        state <= (rd_burst_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
+                        state <= (rd_done)? ST_WRAP_BURST_8BYTE_ADDR_INCR : state;
                     end
                 end
                 
@@ -990,17 +919,17 @@ module hbmc #
                 ST_WRAP_BURST_8BYTE_XFER_SECOND: begin
                     if (wr_not_rd) begin
                         wr_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
-                        state <= (wr_burst_done)? ST_BURST_STOP : state;
+                        state <= (wr_done)? ST_BURST_STOP : state;
                     end else begin
                         rd_burst(ca | CA_ADDR(mem_addr), (C_AXI_DATA_WIDTH == 32)? 16'd2 : 16'd1);
-                        state <= (rd_burst_done)? ST_BURST_STOP : state;
+                        state <= (rd_done)? ST_BURST_STOP : state;
                     end
                 end
                 
                 
                 ST_BURST_INIT: begin
-                    /* If AXI transfer is bigger that the max burst size,
-                     * it will be divided into several transfer. */
+                    /* If AXI transaction is bigger that the max burst size,
+                     * so it will be divided into several transfer. */
                     burst_size <= (word_count < MAX_BURST_COUNT)? word_count : MAX_BURST_COUNT;
                     word_last  <= (word_count == 16'd1)? 1'b1 : 1'b0;
                     state <= ST_BURST_XFER;
@@ -1011,10 +940,10 @@ module hbmc #
                 
                     if (wr_not_rd) begin
                         wr_burst(ca | CA_ADDR(mem_addr), burst_size);
-                        state <= (wr_burst_done)? ST_BURST_STOP : state;
+                        state <= (wr_done)? ST_BURST_STOP : state;
                     end else begin
                         rd_burst(ca | CA_ADDR(mem_addr), burst_size);
-                        state <= (rd_burst_done)? ST_BURST_STOP : state;
+                        state <= (rd_done)? ST_BURST_STOP : state;
                     end
                     
                     if (fifo_din_re | fifo_dout_we) begin
@@ -1049,8 +978,8 @@ module hbmc #
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
     /* RWR (Read-Write Recovery) counter process */
-    always @(posedge clk_hbmc_0) begin
-        if (srst) begin
+    always @(posedge clk_hbmc_0 or negedge rstn) begin
+        if (~rstn) begin
             rwr_tc <= 8'h00;
         end else begin
             if (cs_n) begin

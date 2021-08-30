@@ -1,6 +1,6 @@
 
 # Loading additional proc with user specified bodies to compute parameter values.
-source [file join [file dirname [file dirname [info script]]] gui/OpenHBMC_v1_1.gtcl]
+source [file join [file dirname [file dirname [info script]]] gui/OpenHBMC_v2_0.gtcl]
 
 # Definitional proc to organize widgets for parameters.
 proc init_gui { IPINST } {
@@ -12,18 +12,18 @@ proc init_gui { IPINST } {
   set Memory_options [ipgui::add_group $IPINST -name "Memory options" -parent ${Page_0} -display_name {Memory Options}]
   ipgui::add_param $IPINST -name "C_MEMORY_SIZE_MBITS" -parent ${Memory_options} -show_range false
   set C_HBMC_CLOCK_HZ [ipgui::add_param $IPINST -name "C_HBMC_CLOCK_HZ" -parent ${Memory_options}]
-  set_property tooltip {Value in Hz. Defines frequencies of clk_hbmc_0 (0 degree) and clk_hbmc_270 (270 degree). Minimum clock frequency is limited by 100MHz.} ${C_HBMC_CLOCK_HZ}
+  set_property tooltip {Value in Hz. Defines frequencies of clk_hbmc_0 (0 degree) and clk_hbmc_90 (90 degree). Maximum value depends on memory part capabilities. Current memory controller supports frequencies up to 200MHz. Note that ISERDES clock frequency must be: clk_iserdes = 3 x clk_hbmc_0} ${C_HBMC_CLOCK_HZ}
   set C_HBMC_CS_MAX_LOW_TIME_US [ipgui::add_param $IPINST -name "C_HBMC_CS_MAX_LOW_TIME_US" -parent ${Memory_options} -widget comboBox]
-  set_property tooltip {CS maximum low time} ${C_HBMC_CS_MAX_LOW_TIME_US}
+  set_property tooltip {Chip Select maximum low time. Depends on temperature range: Industrial - 4us, Extended - 1us.} ${C_HBMC_CS_MAX_LOW_TIME_US}
   set C_HBMC_FIXED_LATENCY [ipgui::add_param $IPINST -name "C_HBMC_FIXED_LATENCY" -parent ${Memory_options}]
   set_property tooltip {Makes all read and write transactions require the same initial latency. OpenHBMC supports variable latency, that is why it is recommended to leave this parameter unchecked.} ${C_HBMC_FIXED_LATENCY}
 
   #Adding Group
   set IO_configurations [ipgui::add_group $IPINST -name "IO configurations" -parent ${Page_0} -display_name {IO Signal Integrity}]
   set C_HBMC_FPGA_DRIVE_STRENGTH [ipgui::add_param $IPINST -name "C_HBMC_FPGA_DRIVE_STRENGTH" -parent ${IO_configurations} -widget comboBox]
-  set_property tooltip {Drive strength sets the desired buffers output current to meet the load requirements and depends on various factors, especially the PCB design. Incorrect value may cause non-reliable operation at high frequencies.} ${C_HBMC_FPGA_DRIVE_STRENGTH}
+  set_property tooltip {FPGA output drive strength sets the desired buffer output current to meet the load requirements. Proper value depends on various factors, especially the PCB design. Incorrect value may cause non-reliable operation at high frequencies.} ${C_HBMC_FPGA_DRIVE_STRENGTH}
   set C_HBMC_FPGA_SLEW_RATE [ipgui::add_param $IPINST -name "C_HBMC_FPGA_SLEW_RATE" -parent ${IO_configurations} -widget comboBox]
-  set_property tooltip {Slew rate impacts on rise and fall times of the buffers output and depends on various factors, especially PCB design. Incorrect value may cause non-reliable operation at high frequencies.} ${C_HBMC_FPGA_SLEW_RATE}
+  set_property tooltip {FPGA output slew rate impacts on rise and fall times of the buffer output. Proper value depends on various factors, especially the PCB design. Incorrect value may cause non-reliable operation at high frequencies.} ${C_HBMC_FPGA_SLEW_RATE}
   set C_HBMC_MEM_DRIVE_STRENGTH [ipgui::add_param $IPINST -name "C_HBMC_MEM_DRIVE_STRENGTH" -parent ${IO_configurations} -widget comboBox]
   set_property tooltip {This parameter allows to adjust the DQ[7:0] and RWDS signal output impedance at the memory side to minimize high speed signal behaviors like overshoots, undershoots and ringing. Incorrect value may cause non-reliable operation at high frequencies.} ${C_HBMC_MEM_DRIVE_STRENGTH}
 
@@ -32,12 +32,12 @@ proc init_gui { IPINST } {
   set IODELAY_Configurations [ipgui::add_page $IPINST -name "IODELAY Configurations"]
   #Adding Group
   set IODELAY_configuration [ipgui::add_group $IPINST -name "IODELAY configuration" -parent ${IODELAY_Configurations} -display_name {IODELAY Configuration}]
-  set C_IDELAYCTRL_INTEGRATED [ipgui::add_param $IPINST -name "C_IDELAYCTRL_INTEGRATED" -parent ${IODELAY_configuration}]
-  set_property tooltip {Integrates IDELAYCTRL module that continuosly calibrates individual delay taps (IDELAYs/ODELAYs) in its bank to reduce the effect of PVT (process-voltage-temperature) variations. This option is recommended to be enable by default, except cases when IDELAYCTRL is already used within current IO bank.} ${C_IDELAYCTRL_INTEGRATED}
   set C_IODELAY_REFCLK_MHZ [ipgui::add_param $IPINST -name "C_IODELAY_REFCLK_MHZ" -parent ${IODELAY_configuration}]
   set_property tooltip {Value in MHz. Valid ranges: 190.0 to 210.0 / 290.0 to 310.0} ${C_IODELAY_REFCLK_MHZ}
   set C_IODELAY_GROUP_ID [ipgui::add_param $IPINST -name "C_IODELAY_GROUP_ID" -parent ${IODELAY_configuration}]
   set_property tooltip {Specifies group name for associated IDELAYs/ODELAYs and IDELAYCTRL.} ${C_IODELAY_GROUP_ID}
+  set C_IDELAYCTRL_INTEGRATED [ipgui::add_param $IPINST -name "C_IDELAYCTRL_INTEGRATED" -parent ${IODELAY_configuration}]
+  set_property tooltip {Integrates IDELAYCTRL module that continuosly calibrates individual delay taps (IDELAYs/ODELAYs) in its bank to reduce the effect of PVT (process-voltage-temperature) variations. This option is recommended to be enable by default, except cases when IDELAYCTRL is already used within current IO bank.} ${C_IDELAYCTRL_INTEGRATED}
   #Adding Group
   set RWDS [ipgui::add_group $IPINST -name "RWDS" -parent ${IODELAY_configuration} -layout horizontal]
   set_property tooltip {RWDS} ${RWDS}
@@ -117,26 +117,25 @@ proc init_gui { IPINST } {
   #Adding Group
   set Features [ipgui::add_group $IPINST -name "Features" -parent ${About}]
   ipgui::add_static_text $IPINST -name "Features text" -parent ${Features} -text {
-OpenHBMC IP-core v1.1
+OpenHBMC IP-core v2.0
 
 > Supports HyperRAM & HyperRAM 2.0
 > Supports 3.3V & 1.8V power modes
 > Supports AXI4 data width of 16 / 32 / 64-bit 
 > Supports all AXI4 burst types and sizes:
-> > AXI4 INCR burst sizes up to 256 data beats
-> > AXI4 WRAP bursts of  2, 4, 8, 16 data beats
-> > AXI4 FIXED bursts are treated as INCR burst type
-> No AXI4 read or write reordering
-> Manually configurable IDELAY settings
+-- AXI4 INCR burst sizes up to 256 data beats
+-- AXI4 WRAP bursts of  2, 4, 8, 16 data beats
+-- AXI4 FIXED bursts are treated as INCR burst type
+> Supports HyperBUS frequency up to 200MHz
+> No need to make any kind of calibrations
 }
 
   #Adding Group
   set License [ipgui::add_group $IPINST -name "License" -parent ${About}]
   ipgui::add_static_text $IPINST -name "Text1" -parent ${License} -text {
 Licensed under the Apache License, Version 2.0
-Copyright © 2020, Vaagn Oganesyan, ovgn@protonmail.com
+Copyright © 2020 - 2021, Vaagn Oganesyan, ovgn@protonmail.com
 Repo: github.com/OVGN/OpenHBMC
-
 }
 
   #Adding Group
@@ -299,6 +298,108 @@ proc validate_PARAM_VALUE.C_DQ7_IDELAY_TAPS_VALUE { PARAM_VALUE.C_DQ7_IDELAY_TAP
 	return true
 }
 
+proc update_PARAM_VALUE.C_IDELAYCTRL_INTEGRATED { PARAM_VALUE.C_IDELAYCTRL_INTEGRATED PARAM_VALUE.C_RWDS_USE_IDELAY PARAM_VALUE.C_DQ7_USE_IDELAY PARAM_VALUE.C_DQ6_USE_IDELAY PARAM_VALUE.C_DQ5_USE_IDELAY PARAM_VALUE.C_DQ4_USE_IDELAY PARAM_VALUE.C_DQ3_USE_IDELAY PARAM_VALUE.C_DQ2_USE_IDELAY PARAM_VALUE.C_DQ1_USE_IDELAY PARAM_VALUE.C_DQ0_USE_IDELAY } {
+	# Procedure called to update C_IDELAYCTRL_INTEGRATED when any of the dependent parameters in the arguments change
+	
+	set C_IDELAYCTRL_INTEGRATED ${PARAM_VALUE.C_IDELAYCTRL_INTEGRATED}
+	set C_RWDS_USE_IDELAY ${PARAM_VALUE.C_RWDS_USE_IDELAY}
+	set C_DQ7_USE_IDELAY ${PARAM_VALUE.C_DQ7_USE_IDELAY}
+	set C_DQ6_USE_IDELAY ${PARAM_VALUE.C_DQ6_USE_IDELAY}
+	set C_DQ5_USE_IDELAY ${PARAM_VALUE.C_DQ5_USE_IDELAY}
+	set C_DQ4_USE_IDELAY ${PARAM_VALUE.C_DQ4_USE_IDELAY}
+	set C_DQ3_USE_IDELAY ${PARAM_VALUE.C_DQ3_USE_IDELAY}
+	set C_DQ2_USE_IDELAY ${PARAM_VALUE.C_DQ2_USE_IDELAY}
+	set C_DQ1_USE_IDELAY ${PARAM_VALUE.C_DQ1_USE_IDELAY}
+	set C_DQ0_USE_IDELAY ${PARAM_VALUE.C_DQ0_USE_IDELAY}
+	set values(C_RWDS_USE_IDELAY) [get_property value $C_RWDS_USE_IDELAY]
+	set values(C_DQ7_USE_IDELAY) [get_property value $C_DQ7_USE_IDELAY]
+	set values(C_DQ6_USE_IDELAY) [get_property value $C_DQ6_USE_IDELAY]
+	set values(C_DQ5_USE_IDELAY) [get_property value $C_DQ5_USE_IDELAY]
+	set values(C_DQ4_USE_IDELAY) [get_property value $C_DQ4_USE_IDELAY]
+	set values(C_DQ3_USE_IDELAY) [get_property value $C_DQ3_USE_IDELAY]
+	set values(C_DQ2_USE_IDELAY) [get_property value $C_DQ2_USE_IDELAY]
+	set values(C_DQ1_USE_IDELAY) [get_property value $C_DQ1_USE_IDELAY]
+	set values(C_DQ0_USE_IDELAY) [get_property value $C_DQ0_USE_IDELAY]
+	if { [gen_USERPARAMETER_C_IDELAYCTRL_INTEGRATED_ENABLEMENT $values(C_RWDS_USE_IDELAY) $values(C_DQ7_USE_IDELAY) $values(C_DQ6_USE_IDELAY) $values(C_DQ5_USE_IDELAY) $values(C_DQ4_USE_IDELAY) $values(C_DQ3_USE_IDELAY) $values(C_DQ2_USE_IDELAY) $values(C_DQ1_USE_IDELAY) $values(C_DQ0_USE_IDELAY)] } {
+		set_property enabled true $C_IDELAYCTRL_INTEGRATED
+	} else {
+		set_property enabled false $C_IDELAYCTRL_INTEGRATED
+	}
+}
+
+proc validate_PARAM_VALUE.C_IDELAYCTRL_INTEGRATED { PARAM_VALUE.C_IDELAYCTRL_INTEGRATED } {
+	# Procedure called to validate C_IDELAYCTRL_INTEGRATED
+	return true
+}
+
+proc update_PARAM_VALUE.C_IODELAY_GROUP_ID { PARAM_VALUE.C_IODELAY_GROUP_ID PARAM_VALUE.C_RWDS_USE_IDELAY PARAM_VALUE.C_DQ7_USE_IDELAY PARAM_VALUE.C_DQ6_USE_IDELAY PARAM_VALUE.C_DQ5_USE_IDELAY PARAM_VALUE.C_DQ4_USE_IDELAY PARAM_VALUE.C_DQ3_USE_IDELAY PARAM_VALUE.C_DQ2_USE_IDELAY PARAM_VALUE.C_DQ1_USE_IDELAY PARAM_VALUE.C_DQ0_USE_IDELAY } {
+	# Procedure called to update C_IODELAY_GROUP_ID when any of the dependent parameters in the arguments change
+	
+	set C_IODELAY_GROUP_ID ${PARAM_VALUE.C_IODELAY_GROUP_ID}
+	set C_RWDS_USE_IDELAY ${PARAM_VALUE.C_RWDS_USE_IDELAY}
+	set C_DQ7_USE_IDELAY ${PARAM_VALUE.C_DQ7_USE_IDELAY}
+	set C_DQ6_USE_IDELAY ${PARAM_VALUE.C_DQ6_USE_IDELAY}
+	set C_DQ5_USE_IDELAY ${PARAM_VALUE.C_DQ5_USE_IDELAY}
+	set C_DQ4_USE_IDELAY ${PARAM_VALUE.C_DQ4_USE_IDELAY}
+	set C_DQ3_USE_IDELAY ${PARAM_VALUE.C_DQ3_USE_IDELAY}
+	set C_DQ2_USE_IDELAY ${PARAM_VALUE.C_DQ2_USE_IDELAY}
+	set C_DQ1_USE_IDELAY ${PARAM_VALUE.C_DQ1_USE_IDELAY}
+	set C_DQ0_USE_IDELAY ${PARAM_VALUE.C_DQ0_USE_IDELAY}
+	set values(C_RWDS_USE_IDELAY) [get_property value $C_RWDS_USE_IDELAY]
+	set values(C_DQ7_USE_IDELAY) [get_property value $C_DQ7_USE_IDELAY]
+	set values(C_DQ6_USE_IDELAY) [get_property value $C_DQ6_USE_IDELAY]
+	set values(C_DQ5_USE_IDELAY) [get_property value $C_DQ5_USE_IDELAY]
+	set values(C_DQ4_USE_IDELAY) [get_property value $C_DQ4_USE_IDELAY]
+	set values(C_DQ3_USE_IDELAY) [get_property value $C_DQ3_USE_IDELAY]
+	set values(C_DQ2_USE_IDELAY) [get_property value $C_DQ2_USE_IDELAY]
+	set values(C_DQ1_USE_IDELAY) [get_property value $C_DQ1_USE_IDELAY]
+	set values(C_DQ0_USE_IDELAY) [get_property value $C_DQ0_USE_IDELAY]
+	if { [gen_USERPARAMETER_C_IODELAY_GROUP_ID_ENABLEMENT $values(C_RWDS_USE_IDELAY) $values(C_DQ7_USE_IDELAY) $values(C_DQ6_USE_IDELAY) $values(C_DQ5_USE_IDELAY) $values(C_DQ4_USE_IDELAY) $values(C_DQ3_USE_IDELAY) $values(C_DQ2_USE_IDELAY) $values(C_DQ1_USE_IDELAY) $values(C_DQ0_USE_IDELAY)] } {
+		set_property enabled true $C_IODELAY_GROUP_ID
+	} else {
+		set_property enabled false $C_IODELAY_GROUP_ID
+	}
+}
+
+proc validate_PARAM_VALUE.C_IODELAY_GROUP_ID { PARAM_VALUE.C_IODELAY_GROUP_ID } {
+	# Procedure called to validate C_IODELAY_GROUP_ID
+	return true
+}
+
+proc update_PARAM_VALUE.C_IODELAY_REFCLK_MHZ { PARAM_VALUE.C_IODELAY_REFCLK_MHZ PARAM_VALUE.C_RWDS_USE_IDELAY PARAM_VALUE.C_DQ7_USE_IDELAY PARAM_VALUE.C_DQ6_USE_IDELAY PARAM_VALUE.C_DQ5_USE_IDELAY PARAM_VALUE.C_DQ4_USE_IDELAY PARAM_VALUE.C_DQ3_USE_IDELAY PARAM_VALUE.C_DQ2_USE_IDELAY PARAM_VALUE.C_DQ1_USE_IDELAY PARAM_VALUE.C_DQ0_USE_IDELAY } {
+	# Procedure called to update C_IODELAY_REFCLK_MHZ when any of the dependent parameters in the arguments change
+	
+	set C_IODELAY_REFCLK_MHZ ${PARAM_VALUE.C_IODELAY_REFCLK_MHZ}
+	set C_RWDS_USE_IDELAY ${PARAM_VALUE.C_RWDS_USE_IDELAY}
+	set C_DQ7_USE_IDELAY ${PARAM_VALUE.C_DQ7_USE_IDELAY}
+	set C_DQ6_USE_IDELAY ${PARAM_VALUE.C_DQ6_USE_IDELAY}
+	set C_DQ5_USE_IDELAY ${PARAM_VALUE.C_DQ5_USE_IDELAY}
+	set C_DQ4_USE_IDELAY ${PARAM_VALUE.C_DQ4_USE_IDELAY}
+	set C_DQ3_USE_IDELAY ${PARAM_VALUE.C_DQ3_USE_IDELAY}
+	set C_DQ2_USE_IDELAY ${PARAM_VALUE.C_DQ2_USE_IDELAY}
+	set C_DQ1_USE_IDELAY ${PARAM_VALUE.C_DQ1_USE_IDELAY}
+	set C_DQ0_USE_IDELAY ${PARAM_VALUE.C_DQ0_USE_IDELAY}
+	set values(C_RWDS_USE_IDELAY) [get_property value $C_RWDS_USE_IDELAY]
+	set values(C_DQ7_USE_IDELAY) [get_property value $C_DQ7_USE_IDELAY]
+	set values(C_DQ6_USE_IDELAY) [get_property value $C_DQ6_USE_IDELAY]
+	set values(C_DQ5_USE_IDELAY) [get_property value $C_DQ5_USE_IDELAY]
+	set values(C_DQ4_USE_IDELAY) [get_property value $C_DQ4_USE_IDELAY]
+	set values(C_DQ3_USE_IDELAY) [get_property value $C_DQ3_USE_IDELAY]
+	set values(C_DQ2_USE_IDELAY) [get_property value $C_DQ2_USE_IDELAY]
+	set values(C_DQ1_USE_IDELAY) [get_property value $C_DQ1_USE_IDELAY]
+	set values(C_DQ0_USE_IDELAY) [get_property value $C_DQ0_USE_IDELAY]
+	if { [gen_USERPARAMETER_C_IODELAY_REFCLK_MHZ_ENABLEMENT $values(C_RWDS_USE_IDELAY) $values(C_DQ7_USE_IDELAY) $values(C_DQ6_USE_IDELAY) $values(C_DQ5_USE_IDELAY) $values(C_DQ4_USE_IDELAY) $values(C_DQ3_USE_IDELAY) $values(C_DQ2_USE_IDELAY) $values(C_DQ1_USE_IDELAY) $values(C_DQ0_USE_IDELAY)] } {
+		set_property enabled true $C_IODELAY_REFCLK_MHZ
+	} else {
+		set_property enabled false $C_IODELAY_REFCLK_MHZ
+	}
+}
+
+proc validate_PARAM_VALUE.C_IODELAY_REFCLK_MHZ { PARAM_VALUE.C_IODELAY_REFCLK_MHZ } {
+	# Procedure called to validate C_IODELAY_REFCLK_MHZ
+	return true
+}
+
 proc update_PARAM_VALUE.C_RWDS_IDELAY_TAPS_VALUE { PARAM_VALUE.C_RWDS_IDELAY_TAPS_VALUE PARAM_VALUE.C_RWDS_USE_IDELAY } {
 	# Procedure called to update C_RWDS_IDELAY_TAPS_VALUE when any of the dependent parameters in the arguments change
 	
@@ -440,33 +541,6 @@ proc update_PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH { PARAM_VALUE.C_HBMC_MEM_DRIVE
 
 proc validate_PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH { PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH } {
 	# Procedure called to validate C_HBMC_MEM_DRIVE_STRENGTH
-	return true
-}
-
-proc update_PARAM_VALUE.C_IDELAYCTRL_INTEGRATED { PARAM_VALUE.C_IDELAYCTRL_INTEGRATED } {
-	# Procedure called to update C_IDELAYCTRL_INTEGRATED when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_IDELAYCTRL_INTEGRATED { PARAM_VALUE.C_IDELAYCTRL_INTEGRATED } {
-	# Procedure called to validate C_IDELAYCTRL_INTEGRATED
-	return true
-}
-
-proc update_PARAM_VALUE.C_IODELAY_GROUP_ID { PARAM_VALUE.C_IODELAY_GROUP_ID } {
-	# Procedure called to update C_IODELAY_GROUP_ID when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_IODELAY_GROUP_ID { PARAM_VALUE.C_IODELAY_GROUP_ID } {
-	# Procedure called to validate C_IODELAY_GROUP_ID
-	return true
-}
-
-proc update_PARAM_VALUE.C_IODELAY_REFCLK_MHZ { PARAM_VALUE.C_IODELAY_REFCLK_MHZ } {
-	# Procedure called to update C_IODELAY_REFCLK_MHZ when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_IODELAY_REFCLK_MHZ { PARAM_VALUE.C_IODELAY_REFCLK_MHZ } {
-	# Procedure called to validate C_IODELAY_REFCLK_MHZ
 	return true
 }
 
