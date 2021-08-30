@@ -16,9 +16,9 @@ IP-core is packed for easy Vivado 2020.2 block design integration.
     - AXI4 INCR burst sizes up to 256 data beats (long transfers are automatically splitted into parts to meet maximum CS# low limitation)
     - AXI4 FIXED bursts are treated as INCR burst type
     - AXI4 WRAP bursts of  2, 4, 8, 16 data beats
-- No AXI4 read or write reordering
-- Current resource utilization: 569-LUT, 790-FF, 1.5-BRAM (1.5 x RAMB36E1 = 3 x RAMB18E1)
-- Minimum HyperBus clock frequency is limited to 100MHz (due to IDELAY 2.5ns limitations)
+- Supports HyperBUS frequency up to **200MHz**
+- No need to make any kind of calibration with new DRU (data recovery module)
+- Resource utilization: 781-LUT, 975-FF, 1-RAMB36E1 (RAMB36E1 = 2 x RAMB18E1)
 
 ## How to use:
 1. Download and copy the OpenHBMC folder with all entire files to your local IP-repo directory.
@@ -34,15 +34,17 @@ IP-core is packed for easy Vivado 2020.2 block design integration.
 </p>
 
 ## Status:
-- Successfully passed memory test at 162.5MHz (or 325MB/s) on a real hardware (Spartan-7 + IS66WVH8M8ALL-166B1LI)
-- All types of AXI4 bursts were simulated, but not all of them were verified and tested on hardware.
+- Successfully passes memory test at 200MHz (i.e. < 400MB/s) on a real hardware (Spartan-7 + W956D8MBYA5I)
+- Running heavy load tests, using several AXI traffic generators.
 
 ## TODO:
-- Achieve 200MHz HyperBus clock frequency.
+- ~~Achieve 200MHz HyperBus clock frequency.~~ DONE.
+- ~~Add advanced RWDS strobe delay calibration procedure.~~ DONE. No more calibration needed.
+- Helloworld example project.
 - Add AXI4-Lite slave port for configuration registers access.
-- Add advanced RWDS strobe delay calibration procedure.
 - Add multi-bank (commom data bus) modes to increase memory bandwidth. Dual or Quad rank modes?
 - Add HyperFlash support.
+- Formal verification.
 
 ## Donations:
 Your support makes such kind of projects happen! =)
