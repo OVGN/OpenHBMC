@@ -531,7 +531,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>980fa900</spirit:value>
+            <spirit:value>7bbfa041</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -556,7 +556,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>980fa900</spirit:value>
+            <spirit:value>7bbfa041</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1890,11 +1890,6 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogsynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>hdl/ip/fifo_8b_32w/fifo_8b_32w.xci</spirit:name>
-        <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_id_fifo_axi_ar/fifo_8b_32w_inst/fifo_8b_32w</spirit:userFileType>
-      </spirit:file>
-      <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
         <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
@@ -1948,10 +1943,6 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hbmc_id_fifo.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-      </spirit:file>
-      <spirit:file>
         <spirit:name>hdl/hbmc_iobuf.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
@@ -1966,7 +1957,7 @@
       <spirit:file>
         <spirit:name>hdl/hbmc_axi_top.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_882e207a</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_dd03eea3</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -2002,11 +1993,6 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogbehavioralsimulation_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>hdl/ip/fifo_8b_32w/fifo_8b_32w.xci</spirit:name>
-        <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_id_fifo_axi_ar/fifo_8b_32w_inst/fifo_8b_32w</spirit:userFileType>
-      </spirit:file>
-      <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
         <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
@@ -2057,10 +2043,6 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hbmc_elastic_buf.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/hbmc_id_fifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -2442,11 +2424,11 @@
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>OVGN</xilinx:vendorDisplayName>
       <xilinx:vendorURL>https://github.com/OVGN/OpenHBMC</xilinx:vendorURL>
-      <xilinx:coreRevision>66</xilinx:coreRevision>
+      <xilinx:coreRevision>68</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>xilinx.com:user:OpenHBMC:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2021-08-29T23:39:12Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2021-08-31T01:15:34Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
       </xilinx:tags>
     </xilinx:coreExtensions>
@@ -2454,7 +2436,7 @@
       <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="784528ef"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="96ea5e8c"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="d722fc63"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="6b960d6b"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="262a894f"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="035dff81"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="7daa4e4b"/>

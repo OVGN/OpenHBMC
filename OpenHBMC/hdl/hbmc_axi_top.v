@@ -188,10 +188,6 @@ module hbmc_axi_top #
                 WR_RD_REQ = 2'b11;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
-
-    reg             axi_awready;
-    reg             axi_arready;
-    reg             axi_bvalid;
     
     wire            idelayctrl_rdy_sync;
     wire            clk_idelay;
@@ -201,21 +197,19 @@ module hbmc_axi_top #
     reg             cmd_req;
     reg     [31:0]  cmd_mem_addr;
     reg     [15:0]  cmd_word_cnt;
-    reg             cmd_wr_not_rd     = 1'b0;
-    reg             cmd_wrap_not_incr = 1'b0;
+    reg             cmd_wr_not_rd;
+    reg             cmd_wrap_not_incr;
     wire            cmd_ack;
     
+    /* Transfer state flags */
+    reg             wr_addr_done;
+    reg             wr_data_done;
+    reg             wr_xfer_done;
+    reg             rd_xfer_done;
     
-    /* Read ID FIFO wires */
-    wire    fifo_arid_full;
-    wire    fifo_arid_ena = s_axi_arvalid & s_axi_arready;
-    wire    fifo_rid_ena  = s_axi_rvalid  & s_axi_rready & s_axi_rlast;
     
-    
-    /* Write ID FIFO wires */
-    wire    fifo_awid_full;
-    wire    fifo_awid_ena = s_axi_awvalid & s_axi_awready;
-    wire    fifo_bid_ena  = s_axi_bvalid  & s_axi_bready;
+    wire            axi_rd_condition = s_axi_arvalid & rd_xfer_done;
+    wire            axi_wr_condition = s_axi_awvalid & wr_data_done;
     
     
     /* Read data FIFO wires */
@@ -238,24 +232,23 @@ module hbmc_axi_top #
     wire                                wfifo_wr_ena  = s_axi_wvalid & s_axi_wready;
     wire                                wfifo_wr_full;
     
-    
-    reg     wr_addr_done = 1'b0;
-    reg     wr_data_done = 1'b0;
-    reg     wr_xfer_done = 1'b1;
-    
-    wire    axi_rd_condition = s_axi_arvalid & (~fifo_arid_full) & (rfifo_rd_free > s_axi_arlen);
-    wire    axi_wr_condition = s_axi_awvalid & (~fifo_awid_full) & wr_data_done;
+    reg     [C_S_AXI_ID_WIDTH-1:0]      axi_axid;
+    reg                                 axi_awready;
+    reg                                 axi_arready;
+    reg                                 axi_bvalid;
     
     
     assign  s_axi_awready = axi_awready;
     assign  s_axi_arready = axi_arready;
     
+    assign  s_axi_rid     = axi_axid;
     assign  s_axi_rresp   = AXI_RESP_OKAY;
     assign  s_axi_rdata   =  rfifo_rd_dout;
     assign  s_axi_rlast   =  rfifo_rd_last;
     assign  s_axi_rvalid  = ~rfifo_rd_empty;
     
     assign  s_axi_wready  = ~wfifo_wr_full;
+    assign  s_axi_bid     = axi_axid;
     assign  s_axi_bresp   = AXI_RESP_OKAY;
     assign  s_axi_bvalid  = axi_bvalid;
     
@@ -358,12 +351,15 @@ module hbmc_axi_top #
     /* Main transaction processing FSM */
     always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (~s_axi_aresetn) begin
-            cmd_req      <= 1'b0;
-            cmd_mem_addr <= {32{1'b0}};
-            cmd_word_cnt <= {16{1'b0}};
-            axi_awready  <= 1'b0;
-            axi_arready  <= 1'b0;
-            state        <= ST_RST;
+            cmd_req           <= 1'b0;
+            cmd_wr_not_rd     <= 1'b0;
+            cmd_mem_addr      <= {32{1'b0}};
+            cmd_word_cnt      <= {16{1'b0}};
+            cmd_wrap_not_incr <= 1'b0;
+            axi_awready       <= 1'b0;
+            axi_arready       <= 1'b0;
+            axi_axid          <= {C_S_AXI_ID_WIDTH{1'b0}};
+            state             <= ST_RST;
         end else begin
             case (state)
                 ST_RST: begin
@@ -388,6 +384,7 @@ module hbmc_axi_top #
                         /* New AXI write request */
                         WR_REQ: begin
                             axi_awready <= 1'b1;
+                            axi_axid <= s_axi_awid;
                             hbmc_config_wr_cmd();
                             state <= ST_XFER_INIT;
                         end
@@ -395,6 +392,7 @@ module hbmc_axi_top #
                         /* New AXI read request */
                         RD_REQ: begin
                             axi_arready <= 1'b1;
+                            axi_axid <= s_axi_arid;
                             hbmc_config_rd_cmd();
                             state <= ST_XFER_INIT;
                         end
@@ -405,9 +403,11 @@ module hbmc_axi_top #
                              * on the previous operation */
                             if (cmd_wr_not_rd) begin
                                 axi_arready <= 1'b1;
+                                axi_axid <= s_axi_arid;
                                 hbmc_config_rd_cmd();
                             end else begin
                                 axi_awready <= 1'b1;
+                                axi_axid <= s_axi_awid;
                                 hbmc_config_wr_cmd();
                             end
                             
@@ -436,7 +436,7 @@ module hbmc_axi_top #
                 
                 
                 ST_WAIT_COMPLETE: begin
-                    if ((cmd_wr_not_rd & wr_xfer_done) || (~cmd_wr_not_rd)) begin
+                    if ((cmd_wr_not_rd & wr_xfer_done) || (~cmd_wr_not_rd & rd_xfer_done)) begin
                         state <= ST_XFER_SEL;
                     end
                 end
@@ -449,6 +449,23 @@ module hbmc_axi_top #
         end
     end
     
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    /* Checking AXI read transfer state */
+    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (~s_axi_aresetn) begin
+            rd_xfer_done <= 1'b1;
+        end else begin
+            if (s_axi_arvalid & s_axi_arready) begin
+                rd_xfer_done <= 1'b0;
+            end
+
+            if (s_axi_rvalid & s_axi_rready & s_axi_rlast) begin
+                rd_xfer_done <= 1'b1;
+            end
+        end
+    end
+
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     localparam  ST_BRESP_IDLE = 1'b0,
@@ -640,30 +657,10 @@ module hbmc_axi_top #
         
         .fifo_rd_clk    ( s_axi_aclk     ),
         .fifo_rd_dout   ( rfifo_rd_dout  ),
-        .fifo_rd_free   ( rfifo_rd_free  ),
+        .fifo_rd_free   ( /*----NC----*/ ),
         .fifo_rd_last   ( rfifo_rd_last  ),
         .fifo_rd_ena    ( rfifo_rd_ena   ),
         .fifo_rd_empty  ( rfifo_rd_empty )
-    );
-    
-    
-    /* Read ID FIFO */
-    hbmc_id_fifo #
-    (
-        .AXI_ID_WIDTH ( C_S_AXI_ID_WIDTH )
-    )
-    hbmc_id_fifo_axi_ar
-    (
-        .fifo_clk       ( s_axi_aclk     ),
-        .fifo_rstn      ( s_axi_aresetn  ),
-        
-        .fifo_wr_din    ( s_axi_arid     ),
-        .fifo_wr_ena    ( fifo_arid_ena  ),
-        .fifo_wr_full   ( fifo_arid_full ),
-        
-        .fifo_rd_dout   ( s_axi_rid      ),
-        .fifo_rd_ena    ( fifo_rid_ena   ),
-        .fifo_rd_empty  ( /*----NC----*/ )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -687,26 +684,6 @@ module hbmc_axi_top #
         .fifo_rd_dout   ( wfifo_rd_data  ),
         .fifo_rd_strb   ( wfifo_rd_strb  ),
         .fifo_rd_ena    ( wfifo_rd_ena   ),
-        .fifo_rd_empty  ( /*----NC----*/ )
-    );
-    
-    
-    /* Write ID FIFO */
-    hbmc_id_fifo #
-    (
-        .AXI_ID_WIDTH ( C_S_AXI_ID_WIDTH )
-    )
-    hbmc_id_fifo_axi_aw
-    (
-        .fifo_clk       ( s_axi_aclk     ),
-        .fifo_rstn      ( s_axi_aresetn  ),
-        
-        .fifo_wr_din    ( s_axi_awid     ),
-        .fifo_wr_ena    ( fifo_awid_ena  ),
-        .fifo_wr_full   ( fifo_awid_full ),
-        
-        .fifo_rd_dout   ( s_axi_bid      ),
-        .fifo_rd_ena    ( fifo_bid_ena   ),
         .fifo_rd_empty  ( /*----NC----*/ )
     );
     
