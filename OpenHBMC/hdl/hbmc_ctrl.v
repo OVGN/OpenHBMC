@@ -34,6 +34,7 @@ module hbmc_ctrl #
     parameter integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
     parameter integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
     parameter         C_HBMC_FIXED_LATENCY       = 0,
+    parameter integer C_ISERDES_CLOCKING_MODE    = 0,
     parameter         C_IODELAY_GROUP_ID         = "HBMC",
     parameter real    C_IODELAY_REFCLK_MHZ       = 200.0,
     
@@ -118,6 +119,11 @@ module hbmc_ctrl #
         end
     endgenerate
     
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    localparam  integer MODE_BUFG       = 0,
+                        MODE_BUFIO_BUFR = 1;
+
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     localparam  real    HBMC_CLOCK_PERIOD_NS = 1000000000.0 / C_HBMC_CLOCK_HZ;
@@ -335,32 +341,45 @@ module hbmc_ctrl #
 /*----------------------------------------------------------------------------------------------------------------------------*/
  
     wire    iserdes_clk_iobuf;
-    
-    
-    BUFIO
-    BUFIO_inst
-    (
-        .I  ( clk_iserdes       ),
-        .O  ( iserdes_clk_iobuf )
-    );
-    
-/*----------------------------------------------------------------------------------------------------------------------------*/
-    
     wire    iserdes_clkdiv;
     
     
-    BUFR #
-    (
-        .BUFR_DIVIDE ( "3"       ), // Values: "BYPASS, 1, 2, 3, 4, 5, 6, 7, 8"
-        .SIM_DEVICE  ( "7SERIES" )  // Must be set to "7SERIES"
-    )
-    BUFR_inst_0
-    (
-        .I   ( clk_iserdes      ),  // 1-bit input: Clock buffer input driven by an IBUF, MMCM or local interconnect
-        .CE  ( 1'b1             ),  // 1-bit input: Active high, clock enable (Divided modes only)
-        .CLR ( 1'b0             ),  // 1-bit input: Active high, asynchronous clear (Divided modes only)
-        .O   ( iserdes_clkdiv   )   // 1-bit output: Clock output port
-    );
+    generate
+        case (C_ISERDES_CLOCKING_MODE)
+            MODE_BUFIO_BUFR: begin
+                BUFIO
+                BUFIO_inst
+                (
+                    .I  ( clk_iserdes       ),
+                    .O  ( iserdes_clk_iobuf )
+                );
+                
+                
+                BUFR #
+                (
+                    .BUFR_DIVIDE ( "3"       ), // Values: "BYPASS, 1, 2, 3, 4, 5, 6, 7, 8"
+                    .SIM_DEVICE  ( "7SERIES" )  // Must be set to "7SERIES"
+                )
+                BUFR_inst_0
+                (
+                    .I   ( clk_iserdes      ),  // 1-bit input: Clock buffer input driven by an IBUF, MMCM or local interconnect
+                    .CE  ( 1'b1             ),  // 1-bit input: Active high, clock enable (Divided modes only)
+                    .CLR ( 1'b0             ),  // 1-bit input: Active high, asynchronous clear (Divided modes only)
+                    .O   ( iserdes_clkdiv   )   // 1-bit output: Clock output port
+                );
+            end
+            
+            MODE_BUFG: begin
+                assign iserdes_clk_iobuf = clk_iserdes;
+                assign iserdes_clkdiv = clk_hbmc_0;
+            end
+            
+            default: begin
+                INVALID_PARAMETER invalid_parameter_msg();
+            end
+        
+        endcase
+    endgenerate
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -445,18 +464,29 @@ module hbmc_ctrl #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    hbmc_elastic_buf #
-    (
-        .DATA_WIDTH ( 54 )   // 8x6 bit of data + 6 bit of RWDS
-    )
-    hbmc_elastic_buf_inst
-    (
-        .arstn    ( rstn                         ),
-        .clk_din  ( iserdes_clkdiv               ),
-        .clk_dout ( clk_hbmc_0                   ),
-        .din      ( {rwds_iserdes, data_iserdes} ),
-        .dout     ( {rwds_resync, data_resync}   )
-    );
+    /* Elastic buffer is required only for "BUFIO+BUFR"
+     * clocking mode to make a proper data transfer from 
+     * BUFR clock domain "iserdes_clkdiv" to "clk_hbmc_0"
+     */
+    generate
+        if (C_ISERDES_CLOCKING_MODE == MODE_BUFIO_BUFR) begin
+            hbmc_elastic_buf #
+            (
+                .DATA_WIDTH ( 54 )   // 8x6 bit of data + 6 bit of RWDS
+            )
+            hbmc_elastic_buf_inst
+            (
+                .arstn    ( rstn                         ),
+                .clk_din  ( iserdes_clkdiv               ),
+                .clk_dout ( clk_hbmc_0                   ),
+                .din      ( {rwds_iserdes, data_iserdes} ),
+                .dout     ( {rwds_resync, data_resync}   )
+            );
+        end else begin
+            assign rwds_resync = rwds_iserdes;
+            assign data_resync = data_iserdes;
+        end
+    endgenerate
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     

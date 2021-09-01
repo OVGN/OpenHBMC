@@ -6,8 +6,8 @@ source [file join [file dirname [file dirname [info script]]] gui/OpenHBMC_v2_0.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
   #Adding Page
-  set Page_0 [ipgui::add_page $IPINST -name "Page 0" -display_name {Memory Configurations}]
-  set_property tooltip {Memory Configurations} ${Page_0}
+  set Page_0 [ipgui::add_page $IPINST -name "Page 0" -display_name {Configurations}]
+  set_property tooltip {Controller Configurations} ${Page_0}
   #Adding Group
   set Memory_options [ipgui::add_group $IPINST -name "Memory options" -parent ${Page_0} -display_name {Memory Options}]
   ipgui::add_param $IPINST -name "C_MEMORY_SIZE_MBITS" -parent ${Memory_options} -show_range false
@@ -17,6 +17,12 @@ proc init_gui { IPINST } {
   set_property tooltip {Chip Select maximum low time. Depends on temperature range: Industrial - 4us, Extended - 1us.} ${C_HBMC_CS_MAX_LOW_TIME_US}
   set C_HBMC_FIXED_LATENCY [ipgui::add_param $IPINST -name "C_HBMC_FIXED_LATENCY" -parent ${Memory_options}]
   set_property tooltip {Makes all read and write transactions require the same initial latency. OpenHBMC supports variable latency, that is why it is recommended to leave this parameter unchecked.} ${C_HBMC_FIXED_LATENCY}
+
+  #Adding Group
+  set ISERDES_Clocking_Mode [ipgui::add_group $IPINST -name "ISERDES Clocking Mode" -parent ${Page_0} -display_name {Clocking Mode}]
+  set_property tooltip {ISERDES Clocking Mode} ${ISERDES_Clocking_Mode}
+  set C_ISERDES_CLOCKING_MODE [ipgui::add_param $IPINST -name "C_ISERDES_CLOCKING_MODE" -parent ${ISERDES_Clocking_Mode} -widget comboBox]
+  set_property tooltip {There are two clocking modes: BUFIO+BUFR and BUFG. Mode BUFIO+BUFR has higher performance, but also has clock region routing constraints. Mode BUFG is a bit slower, but has almost no routing constraints. Note that the performance of BUFG, BUFIO and BUFR also vary on FPGA device family.} ${C_ISERDES_CLOCKING_MODE}
 
   #Adding Group
   set IO_configurations [ipgui::add_group $IPINST -name "IO configurations" -parent ${Page_0} -display_name {IO Signal Integrity}]
@@ -29,7 +35,8 @@ proc init_gui { IPINST } {
 
 
   #Adding Page
-  set IODELAY_Configurations [ipgui::add_page $IPINST -name "IODELAY Configurations"]
+  set IODELAY_Configurations [ipgui::add_page $IPINST -name "IODELAY Configurations" -display_name {IODELAY}]
+  set_property tooltip {IODELAY Configuration} ${IODELAY_Configurations}
   #Adding Group
   set IODELAY_configuration [ipgui::add_group $IPINST -name "IODELAY configuration" -parent ${IODELAY_Configurations} -display_name {IODELAY Configuration}]
   set C_IODELAY_REFCLK_MHZ [ipgui::add_param $IPINST -name "C_IODELAY_REFCLK_MHZ" -parent ${IODELAY_configuration}]
@@ -544,6 +551,15 @@ proc validate_PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH { PARAM_VALUE.C_HBMC_MEM_DRI
 	return true
 }
 
+proc update_PARAM_VALUE.C_ISERDES_CLOCKING_MODE { PARAM_VALUE.C_ISERDES_CLOCKING_MODE } {
+	# Procedure called to update C_ISERDES_CLOCKING_MODE when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.C_ISERDES_CLOCKING_MODE { PARAM_VALUE.C_ISERDES_CLOCKING_MODE } {
+	# Procedure called to validate C_ISERDES_CLOCKING_MODE
+	return true
+}
+
 proc update_PARAM_VALUE.C_MEMORY_SIZE_MBITS { PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
 	# Procedure called to update C_MEMORY_SIZE_MBITS when any of the dependent parameters in the arguments change
 }
@@ -813,5 +829,10 @@ proc update_MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE { MODELPARAM_VALUE.C_DQ0_ID
 proc update_MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS { MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.C_MEMORY_SIZE_MBITS}] ${MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS}
+}
+
+proc update_MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE { MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE PARAM_VALUE.C_ISERDES_CLOCKING_MODE } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.C_ISERDES_CLOCKING_MODE}] ${MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE}
 }
 

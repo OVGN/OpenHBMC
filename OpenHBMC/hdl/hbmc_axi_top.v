@@ -48,6 +48,7 @@ module hbmc_axi_top #
     parameter integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
     parameter integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
     parameter         C_HBMC_FIXED_LATENCY       = 0,
+    parameter integer C_ISERDES_CLOCKING_MODE    = 0,
     
     parameter         C_IDELAYCTRL_INTEGRATED    = 0,
     parameter         C_IODELAY_GROUP_ID         = "HBMC",
@@ -584,6 +585,7 @@ module hbmc_axi_top #
         .C_HBMC_MEM_DRIVE_STRENGTH  ( C_HBMC_MEM_DRIVE_STRENGTH  ),
         .C_HBMC_CS_MAX_LOW_TIME_US  ( C_HBMC_CS_MAX_LOW_TIME_US  ),
         .C_HBMC_FIXED_LATENCY       ( C_HBMC_FIXED_LATENCY       ),
+        .C_ISERDES_CLOCKING_MODE    ( C_ISERDES_CLOCKING_MODE    ),
         .C_IODELAY_GROUP_ID         ( C_IODELAY_GROUP_ID         ),
         .C_IODELAY_REFCLK_MHZ       ( C_IODELAY_REFCLK_MHZ       ),
         

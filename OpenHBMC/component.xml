@@ -531,7 +531,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>7bbfa041</spirit:value>
+            <spirit:value>e793a38c</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -556,7 +556,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>7bbfa041</spirit:value>
+            <spirit:value>e793a38c</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -570,7 +570,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>49584a2d</spirit:value>
+            <spirit:value>f9990b9b</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1831,6 +1831,11 @@
         <spirit:displayName>C Memory Size Mbits</spirit:displayName>
         <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS">64</spirit:value>
       </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="integer">
+        <spirit:name>C_ISERDES_CLOCKING_MODE</spirit:name>
+        <spirit:displayName>C Iserdes Clocking Mode</spirit:displayName>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE">0</spirit:value>
+      </spirit:modelParameter>
     </spirit:modelParameters>
   </spirit:model>
   <spirit:choices>
@@ -1867,6 +1872,11 @@
       <spirit:enumeration spirit:text="46 ohm">46</spirit:enumeration>
       <spirit:enumeration spirit:text="67 ohm">67</spirit:enumeration>
       <spirit:enumeration spirit:text="115 ohm">115</spirit:enumeration>
+    </spirit:choice>
+    <spirit:choice>
+      <spirit:name>choice_pairs_448fbaa5</spirit:name>
+      <spirit:enumeration spirit:text="BUFG">0</spirit:enumeration>
+      <spirit:enumeration spirit:text="BUFIO + BUFR">1</spirit:enumeration>
     </spirit:choice>
     <spirit:choice>
       <spirit:name>choice_pairs_6bb002cf</spirit:name>
@@ -1957,7 +1967,7 @@
       <spirit:file>
         <spirit:name>hdl/hbmc_axi_top.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_dd03eea3</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_8a3b2817</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -2097,7 +2107,7 @@
       <spirit:file>
         <spirit:name>xgui/OpenHBMC_v2_0.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_06c61c3c</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_96b8ab64</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -2400,6 +2410,11 @@
       <spirit:displayName>Memory Size (Mbits)</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_MEMORY_SIZE_MBITS">64</spirit:value>
     </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>C_ISERDES_CLOCKING_MODE</spirit:name>
+      <spirit:displayName>ISERDES Clocking Mode</spirit:displayName>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_ISERDES_CLOCKING_MODE" spirit:choiceRef="choice_pairs_448fbaa5">0</spirit:value>
+    </spirit:parameter>
   </spirit:parameters>
   <spirit:vendorExtensions>
     <xilinx:coreExtensions>
@@ -2424,11 +2439,11 @@
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>OVGN</xilinx:vendorDisplayName>
       <xilinx:vendorURL>https://github.com/OVGN/OpenHBMC</xilinx:vendorURL>
-      <xilinx:coreRevision>68</xilinx:coreRevision>
+      <xilinx:coreRevision>70</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>xilinx.com:user:OpenHBMC:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2021-08-31T01:15:34Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2021-09-01T01:00:08Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
       </xilinx:tags>
     </xilinx:coreExtensions>
@@ -2436,10 +2451,10 @@
       <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="784528ef"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="96ea5e8c"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="6b960d6b"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="ad8e6c7c"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="262a894f"/>
-      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="035dff81"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="7daa4e4b"/>
+      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="a69740e1"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="39cefc96"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>
