@@ -278,12 +278,13 @@ module hbmc_ctrl #
     
                         reg             reset_n;
                         reg             cs_n;
-                        reg             cen;
+                        reg             ck_ena;
                         reg     [1:0]   rwds_sdr_i;
                         reg             rwds_t;
                         reg     [15:0]  dq_sdr_i;
     (* KEEP = "TRUE" *) reg     [7:0]   dq_t;
-                        reg             dru_ena;
+                        reg             dru_rstn;
+                        reg             dru_rwds_mask;
                         reg     [7:0]   latency_tc;
                         reg     [7:0]   rwr_tc;
                         reg     [15:0]  power_up_tc;
@@ -332,7 +333,7 @@ module hbmc_ctrl #
     )
     hbmc_clk_obuf_inst
     (
-        .cen     ( cen         ),
+        .cen     ( ck_ena      ),
         .clk     ( clk_hbmc_90 ),
         .hb_ck_p ( hb_ck_p     ),
         .hb_ck_n ( hb_ck_n     )
@@ -494,7 +495,8 @@ module hbmc_ctrl #
     hbmc_dru_inst
     (
         .clk                ( clk_hbmc_0        ),
-        .arstn              ( rstn & dru_ena    ),
+        .arstn              ( dru_rstn          ),
+        .rwds_mask          ( dru_rwds_mask     ),
         .rwds_oversampled   ( rwds_resync       ),
         .data_oversampled   ( data_resync       ),
         .recov_valid        ( hb_recov_data_vld ),
@@ -527,7 +529,7 @@ module hbmc_ctrl #
             ST_WR_0: begin
                 if (rwr_tc >= MIN_RWR) begin
                     cs_n       <= 1'b0;
-                    cen        <= 1'b1;
+                    ck_ena     <= 1'b1;
                     rwds_t     <= RWDS_DIR_INPUT;
                     dq_t       <= DQ_DIR_OUTPUT;
                     burst_cnt  <= 16'd1;            // Not zero, as FIFO is FWFT (First Word Falls Through)
@@ -579,7 +581,7 @@ module hbmc_ctrl #
             end
             
             ST_WR_6: begin
-                cen      <= 1'b0;
+                ck_ena   <= 1'b0;
                 dq_t     <= DQ_DIR_INPUT;
                 rwds_t   <= RWDS_DIR_INPUT;
                 wr_state <= ST_WR_DONE;
@@ -621,8 +623,8 @@ module hbmc_ctrl #
             ST_RD_0: begin
                 if (rwr_tc >= MIN_RWR) begin
                     cs_n      <= 1'b0;
-                    cen       <= 1'b1;
-                    dru_ena   <= 1'b1;
+                    ck_ena    <= 1'b1;
+                    dru_rstn  <= 1'b1;
                     burst_cnt <= 16'd0;
                     rwds_t    <= RWDS_DIR_INPUT;
                     dq_t      <= DQ_DIR_OUTPUT;
@@ -648,6 +650,7 @@ module hbmc_ctrl #
             
             ST_RD_4: begin
                 if (latency_tc == 8'h00) begin
+                    dru_rwds_mask <= 1'b0;
                     dq_t <= DQ_DIR_INPUT;
                     rd_state <= ST_RD_5;
                 end else begin
@@ -657,7 +660,7 @@ module hbmc_ctrl #
             
             ST_RD_5: begin
                 if (burst_cnt == rd_size) begin
-                    cen <= 1'b0;
+                    ck_ena <= 1'b0;
                     rd_state <= ST_RD_6;
                 end else begin
                     burst_cnt <= burst_cnt + 1'b1;
@@ -678,7 +681,8 @@ module hbmc_ctrl #
             
             ST_RD_8: begin
                 if (~hb_recov_data_vld) begin
-                    dru_ena  <= 1'b0;
+                    dru_rstn <= 1'b0;
+                    dru_rwds_mask <= 1'b1;
                     rd_state <= ST_RD_DONE;
                 end
             end
@@ -746,12 +750,13 @@ module hbmc_ctrl #
         
         reset_n         <= 1'b0;
         cs_n            <= 1'b1;
-        cen             <= 1'b0;
+        ck_ena          <= 1'b0;
         rwds_sdr_i      <= 2'b00;
         rwds_t          <= RWDS_DIR_INPUT;
         dq_sdr_i        <= {16{1'b0}};
         dq_t            <= DQ_DIR_INPUT;
-        dru_ena         <= 1'b0;
+        dru_rstn        <= 1'b0;
+        dru_rwds_mask   <= 1'b1;
         latency_tc      <=  {8{1'b0}};
         power_up_tc     <= {16{1'b0}};
         hram_id_reg     <= {16{1'b0}};

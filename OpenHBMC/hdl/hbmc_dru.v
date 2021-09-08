@@ -28,6 +28,7 @@ module hbmc_dru
 (
     input   wire            clk,
     input   wire            arstn,
+    input   wire            rwds_mask,
     input   wire    [5:0]   rwds_oversampled,
     input   wire    [47:0]  data_oversampled,
     output  wire            recov_valid,
@@ -48,14 +49,14 @@ module hbmc_dru
         end else begin
             data_pair     <= data_oversampled;
             prev_last_bit <= rwds_oversampled[5];
-            rwds_pair_xor <= {
-                                 ^ rwds_oversampled[5:4],
-                                 ^ rwds_oversampled[4:3],
-                                 ^ rwds_oversampled[3:2],
-                                 ^ rwds_oversampled[2:1],
-                                 ^ rwds_oversampled[1:0],
-                                   rwds_oversampled[0] ^ prev_last_bit
-                             };
+            rwds_pair_xor <= (rwds_mask)? {6{1'b0}} : {
+                                                          ^ rwds_oversampled[5:4],
+                                                          ^ rwds_oversampled[4:3],
+                                                          ^ rwds_oversampled[3:2],
+                                                          ^ rwds_oversampled[2:1],
+                                                          ^ rwds_oversampled[1:0],
+                                                            rwds_oversampled[0] ^ prev_last_bit
+                                                      };
         end
     end
     
@@ -144,9 +145,9 @@ module hbmc_dru
                 end
                 
                 5'b00010: begin
-                    data_h    <= data_h;
-                    data_l    <= data_l_mux_2;
-                    data_strb <= 2'b01;
+                    data_h    <= (carry)? data_l_mux_2 : data_h;
+                    data_l    <= (carry)? data_l_mux_0 : data_l_mux_2;
+                    data_strb <= (carry)? 2'b11 : 2'b01;
                 end
                 
                 5'b01010: begin

@@ -6,15 +6,28 @@ source [file join [file dirname [file dirname [info script]]] gui/OpenHBMC_v2_0.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
   #Adding Page
-  set Page_0 [ipgui::add_page $IPINST -name "Page 0" -display_name {Configurations}]
-  set_property tooltip {Controller Configurations} ${Page_0}
+  set AXI_Configurations [ipgui::add_page $IPINST -name "AXI Configurations" -display_name {AXI}]
+  set_property tooltip {AXI Parameter Configurations} ${AXI_Configurations}
+  set C_S_AXI_ADDR_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_ADDR_WIDTH" -parent ${AXI_Configurations}]
+  set_property tooltip {AXI address width} ${C_S_AXI_ADDR_WIDTH}
+  ipgui::add_param $IPINST -name "C_S_AXI_DATA_WIDTH" -parent ${AXI_Configurations} -widget comboBox
+  ipgui::add_param $IPINST -name "C_S_AXI_ID_WIDTH" -parent ${AXI_Configurations}
+  ipgui::add_param $IPINST -name "C_S_AXI_ARUSER_WIDTH" -parent ${AXI_Configurations}
+  ipgui::add_param $IPINST -name "C_S_AXI_AWUSER_WIDTH" -parent ${AXI_Configurations}
+  ipgui::add_param $IPINST -name "C_S_AXI_WUSER_WIDTH" -parent ${AXI_Configurations}
+  ipgui::add_param $IPINST -name "C_S_AXI_RUSER_WIDTH" -parent ${AXI_Configurations}
+  ipgui::add_param $IPINST -name "C_S_AXI_BUSER_WIDTH" -parent ${AXI_Configurations}
+
+  #Adding Page
+  set Page_0 [ipgui::add_page $IPINST -name "Page 0" -display_name {Controller}]
+  set_property tooltip {Memory Controller Configurations} ${Page_0}
   #Adding Group
   set Memory_options [ipgui::add_group $IPINST -name "Memory options" -parent ${Page_0} -display_name {Memory Options}]
   ipgui::add_param $IPINST -name "C_MEMORY_SIZE_MBITS" -parent ${Memory_options} -show_range false
   set C_HBMC_CLOCK_HZ [ipgui::add_param $IPINST -name "C_HBMC_CLOCK_HZ" -parent ${Memory_options}]
-  set_property tooltip {Value in Hz. Defines frequencies of clk_hbmc_0 (0 degree) and clk_hbmc_90 (90 degree). Maximum value depends on memory part capabilities. Current memory controller supports frequencies up to 200MHz. Note that ISERDES clock frequency must be: clk_iserdes = 3 x clk_hbmc_0} ${C_HBMC_CLOCK_HZ}
+  set_property tooltip {Clock frequency in Hz for clk_hbmc_0 and clk_hbmc_90. <br/><br/> clk_hbmc_0 - memory controller clock, 0 degree phase. <br/> clk_hbmc_90 - memory controller clock, 90 degree phase. <br/> <br/> Maximum value depends on memory part capabilities. Current memory controller supports frequencies up to 200MHz. <br/> <br/> NOTE: ISERDES clock frequency MUST be: <br/> <b>clk_iserdes = 3 x clk_hbmc_0</b>} ${C_HBMC_CLOCK_HZ}
   set C_HBMC_CS_MAX_LOW_TIME_US [ipgui::add_param $IPINST -name "C_HBMC_CS_MAX_LOW_TIME_US" -parent ${Memory_options} -widget comboBox]
-  set_property tooltip {Chip Select maximum low time. Depends on temperature range: Industrial - 4us, Extended - 1us.} ${C_HBMC_CS_MAX_LOW_TIME_US}
+  set_property tooltip {Chip Select maximum low time. Depends on actual working temperature range and memory part capabilities: <br/></li><li> Industrial - 4us </li><li> Extended - 1us.} ${C_HBMC_CS_MAX_LOW_TIME_US}
   set C_HBMC_FIXED_LATENCY [ipgui::add_param $IPINST -name "C_HBMC_FIXED_LATENCY" -parent ${Memory_options}]
   set_property tooltip {Makes all read and write transactions require the same initial latency. OpenHBMC supports variable latency, that is why it is recommended to leave this parameter unchecked.} ${C_HBMC_FIXED_LATENCY}
 
@@ -22,7 +35,7 @@ proc init_gui { IPINST } {
   set ISERDES_Clocking_Mode [ipgui::add_group $IPINST -name "ISERDES Clocking Mode" -parent ${Page_0} -display_name {Clocking Mode}]
   set_property tooltip {ISERDES Clocking Mode} ${ISERDES_Clocking_Mode}
   set C_ISERDES_CLOCKING_MODE [ipgui::add_param $IPINST -name "C_ISERDES_CLOCKING_MODE" -parent ${ISERDES_Clocking_Mode} -widget comboBox]
-  set_property tooltip {There are two clocking modes: BUFIO+BUFR and BUFG. Mode BUFIO+BUFR has higher performance, but also has clock region routing constraints. Mode BUFG is a bit slower, but has almost no routing constraints. Note that the performance of BUFG, BUFIO and BUFR also vary on FPGA device family.} ${C_ISERDES_CLOCKING_MODE}
+  set_property tooltip {<ul>     <li>         <b>BUFIO+BUFR</b> clocking mode. <br/><br/>         This mode has highest performance, though the disadvantage is the clock region routing constraints. To use this mode keep all DQ[7:0] and RWDS lines within a single IO bank.         <br/>         <br/>                  Clock phases: <br>         <ul>             <li>                 <em>clk_hbmc_0</em> and <em>clk_hbmc_90</em> are 90 degree phase aligned.             </li>                          <li>                 <em>clk_iserdes</em> has no any phase alignment requirements in this mode.             </li>         </ul>                  <br/>                  Clocking scheme: <br/>         <ul>                 MMCM/PLL_out_0 -> (no buffer) -> <em>clk_iserdes</em> <br>                 MMCM/PLL_out_1 -> BUFG -> <em>clk_hbmc_0</em> <br>                 MMCM/PLL_out_2 -> BUFG -> <em>clk_hbmc_90</em> <br>         </ul>                  <br/>         <br/>     </li>          <li>         <b>BUFG</b> clocking mode. <br/><br/>         This mode has lower performance, as BUFG is slower than BUFIO. But there is almost no routing constraints.         <br/>         <br/>                  Clock phases: <br>         <ul>             <li>                 <em>clk_hbmc_0</em> and <em>clk_hbmc_90</em> are 90 degree phase aligned.             </li>                          <li>                 <em>clk_iserdes</em> <b>MUST</b> be 0 degree phase aligned to <em>clk_hbmc_0</em> in this mode.             </li>         </ul>                  Clocking scheme: <br/>         <ul>             MMCM/PLL_out_0 -> BUFG -> <em>clk_iserdes</em> <br>             MMCM/PLL_out_1 -> BUFG -> <em>clk_hbmc_0</em> <br>             MMCM/PLL_out_2 -> BUFG -> <em>clk_hbmc_90</em> <br>         </ul>     </li> </ul>} ${C_ISERDES_CLOCKING_MODE}
 
   #Adding Group
   set IO_configurations [ipgui::add_group $IPINST -name "IO configurations" -parent ${Page_0} -display_name {IO Signal Integrity}]
@@ -40,7 +53,7 @@ proc init_gui { IPINST } {
   #Adding Group
   set IODELAY_configuration [ipgui::add_group $IPINST -name "IODELAY configuration" -parent ${IODELAY_Configurations} -display_name {IODELAY Configuration}]
   set C_IODELAY_REFCLK_MHZ [ipgui::add_param $IPINST -name "C_IODELAY_REFCLK_MHZ" -parent ${IODELAY_configuration}]
-  set_property tooltip {Value in MHz. Valid ranges: 190.0 to 210.0 / 290.0 to 310.0} ${C_IODELAY_REFCLK_MHZ}
+  set_property tooltip {Value in MHz. Valid ranges: <ul> 190.0 to 210.0 <br/> 290.0 to 310.0 </ul>} ${C_IODELAY_REFCLK_MHZ}
   set C_IODELAY_GROUP_ID [ipgui::add_param $IPINST -name "C_IODELAY_GROUP_ID" -parent ${IODELAY_configuration}]
   set_property tooltip {Specifies group name for associated IDELAYs/ODELAYs and IDELAYCTRL.} ${C_IODELAY_GROUP_ID}
   set C_IDELAYCTRL_INTEGRATED [ipgui::add_param $IPINST -name "C_IDELAYCTRL_INTEGRATED" -parent ${IODELAY_configuration}]
