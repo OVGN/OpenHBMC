@@ -8,22 +8,32 @@ proc init_gui { IPINST } {
   #Adding Page
   set AXI_Configurations [ipgui::add_page $IPINST -name "AXI Configurations" -display_name {AXI}]
   set_property tooltip {AXI Parameter Configurations} ${AXI_Configurations}
-  set C_S_AXI_ADDR_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_ADDR_WIDTH" -parent ${AXI_Configurations}]
-  set_property tooltip {AXI address width} ${C_S_AXI_ADDR_WIDTH}
-  ipgui::add_param $IPINST -name "C_S_AXI_DATA_WIDTH" -parent ${AXI_Configurations} -widget comboBox
-  ipgui::add_param $IPINST -name "C_S_AXI_ID_WIDTH" -parent ${AXI_Configurations}
-  ipgui::add_param $IPINST -name "C_S_AXI_ARUSER_WIDTH" -parent ${AXI_Configurations}
-  ipgui::add_param $IPINST -name "C_S_AXI_AWUSER_WIDTH" -parent ${AXI_Configurations}
-  ipgui::add_param $IPINST -name "C_S_AXI_WUSER_WIDTH" -parent ${AXI_Configurations}
-  ipgui::add_param $IPINST -name "C_S_AXI_RUSER_WIDTH" -parent ${AXI_Configurations}
-  ipgui::add_param $IPINST -name "C_S_AXI_BUSER_WIDTH" -parent ${AXI_Configurations}
+  #Adding Group
+  set AXI_parameters [ipgui::add_group $IPINST -name "AXI parameters" -parent ${AXI_Configurations} -display_name {AXI4 Parameters}]
+  set_property tooltip {AXI4 Parameters} ${AXI_parameters}
+  set C_S_AXI_ADDR_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_ADDR_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_ADDR_WIDTH <br/> <br/> This parameter is based on Address Editor memory range value and calculated automatically durng Validate Design procedure.} ${C_S_AXI_ADDR_WIDTH}
+  set C_S_AXI_DATA_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_DATA_WIDTH" -parent ${AXI_parameters} -widget comboBox]
+  set_property tooltip {C_S_AXI_DATA_WIDTH} ${C_S_AXI_DATA_WIDTH}
+  set C_S_AXI_ID_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_ID_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_ID_WIDTH} ${C_S_AXI_ID_WIDTH}
+  set C_S_AXI_ARUSER_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_ARUSER_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_ARUSER_WIDTH} ${C_S_AXI_ARUSER_WIDTH}
+  set C_S_AXI_RUSER_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_RUSER_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_RUSER_WIDTH} ${C_S_AXI_RUSER_WIDTH}
+  set C_S_AXI_AWUSER_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_AWUSER_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_AWUSER_WIDTH} ${C_S_AXI_AWUSER_WIDTH}
+  set C_S_AXI_WUSER_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_WUSER_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_WUSER_WIDTH} ${C_S_AXI_WUSER_WIDTH}
+  set C_S_AXI_BUSER_WIDTH [ipgui::add_param $IPINST -name "C_S_AXI_BUSER_WIDTH" -parent ${AXI_parameters}]
+  set_property tooltip {C_S_AXI_BUSER_WIDTH} ${C_S_AXI_BUSER_WIDTH}
+
 
   #Adding Page
   set Page_0 [ipgui::add_page $IPINST -name "Page 0" -display_name {Controller}]
   set_property tooltip {Memory Controller Configurations} ${Page_0}
   #Adding Group
   set Memory_options [ipgui::add_group $IPINST -name "Memory options" -parent ${Page_0} -display_name {Memory Options}]
-  ipgui::add_param $IPINST -name "C_MEMORY_SIZE_MBITS" -parent ${Memory_options} -show_range false
   set C_HBMC_CLOCK_HZ [ipgui::add_param $IPINST -name "C_HBMC_CLOCK_HZ" -parent ${Memory_options}]
   set_property tooltip {Clock frequency in Hz for clk_hbmc_0 and clk_hbmc_90. <br/><br/> clk_hbmc_0 - memory controller clock, 0 degree phase. <br/> clk_hbmc_90 - memory controller clock, 90 degree phase. <br/> <br/> Maximum value depends on memory part capabilities. Current memory controller supports frequencies up to 200MHz. <br/> <br/> NOTE: ISERDES clock frequency MUST be: <br/> <b>clk_iserdes = 3 x clk_hbmc_0</b>} ${C_HBMC_CLOCK_HZ}
   set C_HBMC_CS_MAX_LOW_TIME_US [ipgui::add_param $IPINST -name "C_HBMC_CS_MAX_LOW_TIME_US" -parent ${Memory_options} -widget comboBox]
@@ -573,15 +583,6 @@ proc validate_PARAM_VALUE.C_ISERDES_CLOCKING_MODE { PARAM_VALUE.C_ISERDES_CLOCKI
 	return true
 }
 
-proc update_PARAM_VALUE.C_MEMORY_SIZE_MBITS { PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
-	# Procedure called to update C_MEMORY_SIZE_MBITS when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.C_MEMORY_SIZE_MBITS { PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
-	# Procedure called to validate C_MEMORY_SIZE_MBITS
-	return true
-}
-
 proc update_PARAM_VALUE.C_RWDS_USE_IDELAY { PARAM_VALUE.C_RWDS_USE_IDELAY } {
 	# Procedure called to update C_RWDS_USE_IDELAY when any of the dependent parameters in the arguments change
 }
@@ -837,11 +838,6 @@ proc update_MODELPARAM_VALUE.C_DQ1_IDELAY_TAPS_VALUE { MODELPARAM_VALUE.C_DQ1_ID
 proc update_MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE { MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE PARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE}] ${MODELPARAM_VALUE.C_DQ0_IDELAY_TAPS_VALUE}
-}
-
-proc update_MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS { MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS PARAM_VALUE.C_MEMORY_SIZE_MBITS } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.C_MEMORY_SIZE_MBITS}] ${MODELPARAM_VALUE.C_MEMORY_SIZE_MBITS}
 }
 
 proc update_MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE { MODELPARAM_VALUE.C_ISERDES_CLOCKING_MODE PARAM_VALUE.C_ISERDES_CLOCKING_MODE } {

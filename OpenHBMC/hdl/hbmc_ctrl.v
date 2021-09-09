@@ -27,36 +27,36 @@
 
 module hbmc_ctrl #
 (
-    parameter integer C_AXI_DATA_WIDTH           = 32,
-    parameter integer C_HBMC_CLOCK_HZ            = 166000000,
-    parameter integer C_HBMC_FPGA_DRIVE_STRENGTH = 8,
-    parameter         C_HBMC_FPGA_SLEW_RATE      = "SLOW",
-    parameter integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
-    parameter integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
-    parameter         C_HBMC_FIXED_LATENCY       = 0,
-    parameter integer C_ISERDES_CLOCKING_MODE    = 0,
-    parameter         C_IODELAY_GROUP_ID         = "HBMC",
-    parameter real    C_IODELAY_REFCLK_MHZ       = 200.0,
+    parameter   integer C_AXI_DATA_WIDTH           = 32,
+    parameter   integer C_HBMC_CLOCK_HZ            = 166000000,
+    parameter   integer C_HBMC_FPGA_DRIVE_STRENGTH = 8,
+    parameter           C_HBMC_FPGA_SLEW_RATE      = "SLOW",
+    parameter   integer C_HBMC_MEM_DRIVE_STRENGTH  = 46,
+    parameter   integer C_HBMC_CS_MAX_LOW_TIME_US  = 4,
+    parameter           C_HBMC_FIXED_LATENCY       = 0,
+    parameter   integer C_ISERDES_CLOCKING_MODE    = 0,
+    parameter           C_IODELAY_GROUP_ID         = "HBMC",
+    parameter   real    C_IODELAY_REFCLK_MHZ       = 200.0,
     
-    parameter         C_RWDS_USE_IDELAY = 0,
-    parameter         C_DQ7_USE_IDELAY  = 0,
-    parameter         C_DQ6_USE_IDELAY  = 0,
-    parameter         C_DQ5_USE_IDELAY  = 0,
-    parameter         C_DQ4_USE_IDELAY  = 0,
-    parameter         C_DQ3_USE_IDELAY  = 0,
-    parameter         C_DQ2_USE_IDELAY  = 0,
-    parameter         C_DQ1_USE_IDELAY  = 0,
-    parameter         C_DQ0_USE_IDELAY  = 0,
+    parameter           C_RWDS_USE_IDELAY = 0,
+    parameter           C_DQ7_USE_IDELAY  = 0,
+    parameter           C_DQ6_USE_IDELAY  = 0,
+    parameter           C_DQ5_USE_IDELAY  = 0,
+    parameter           C_DQ4_USE_IDELAY  = 0,
+    parameter           C_DQ3_USE_IDELAY  = 0,
+    parameter           C_DQ2_USE_IDELAY  = 0,
+    parameter           C_DQ1_USE_IDELAY  = 0,
+    parameter           C_DQ0_USE_IDELAY  = 0,
     
-    parameter [4:0]   C_RWDS_IDELAY_TAPS_VALUE = 0,
-    parameter [4:0]   C_DQ7_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ6_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ5_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ4_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ3_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ2_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ1_IDELAY_TAPS_VALUE  = 0,
-    parameter [4:0]   C_DQ0_IDELAY_TAPS_VALUE  = 0
+    parameter   [4:0]   C_RWDS_IDELAY_TAPS_VALUE = 0,
+    parameter   [4:0]   C_DQ7_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ6_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ5_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ4_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ3_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ2_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ1_IDELAY_TAPS_VALUE  = 0,
+    parameter   [4:0]   C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
     input   wire            rstn,
@@ -66,7 +66,7 @@ module hbmc_ctrl #
     input   wire            clk_idelay_ref,
     
     input   wire            cmd_req,
-    output  reg             cmd_ack = 1'b0,
+    output  reg             cmd_ack,
     input   wire    [31:0]  cmd_mem_addr,
     input   wire    [15:0]  cmd_word_count,
     input   wire            cmd_wr_not_rd,
@@ -771,6 +771,7 @@ module hbmc_ctrl #
         mem_addr        <= {32{1'b0}};
         wr_not_rd       <= 1'b0;
         wrap_not_incr   <= 1'b0;
+        cmd_ack         <= 1'b0;
     end
     endtask
     

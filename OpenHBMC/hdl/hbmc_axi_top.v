@@ -26,13 +26,6 @@
 
 module hbmc_axi_top #
 (
-    /* TODO: can't properly pass BASE and HIGH addresses from the 
-     * Block Design Address Editor. Some special undocumented tcl
-     * script command is needed. Requires some research. */
-    // parameter C_S_AXI_BASEADDR = 32'h00000000,
-    // parameter C_S_AXI_HIGHADDR = 32'hffffffff,
-    
-    parameter integer C_MEMORY_SIZE_MBITS  = 64,
     parameter integer C_S_AXI_ID_WIDTH     = 1,
     parameter integer C_S_AXI_DATA_WIDTH   = 32,
     parameter integer C_S_AXI_ADDR_WIDTH   = 32,
@@ -149,26 +142,30 @@ module hbmc_axi_top #
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
     /* Checking input parameters */
-    
+
     generate
         /* Supported AXI4 data bus width is 16/32/64 bit only. */
         if ((C_S_AXI_DATA_WIDTH != 16) && (C_S_AXI_DATA_WIDTH != 32) && (C_S_AXI_DATA_WIDTH != 64)) begin
             INVALID_PARAMETER invalid_parameter_msg();
         end
     endgenerate
-    
-    
-    generate
-        /* Supported AXI4 address bus width is 32-bit only. */
-        if (C_S_AXI_ADDR_WIDTH != 32) begin
-            INVALID_PARAMETER invalid_parameter_msg();
+
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    function integer clog2;
+        input integer value;
+        begin
+            for (clog2 = 0; value > 1; clog2 = clog2 + 1) begin
+                value = value >> 1;
+            end
         end
-    endgenerate
+    endfunction
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  C_MEMORY_SIZE_IN_BYTES = (C_MEMORY_SIZE_MBITS / 8) * 1024 * 1024;
-    
+    localparam  [C_S_AXI_ADDR_WIDTH - 1:0]  AXI_ADDR_ALIGN_MASK = (C_S_AXI_DATA_WIDTH == 16)? {{C_S_AXI_ADDR_WIDTH - 1{1'b1}}, {1{1'b0}}} :
+                                                                  (C_S_AXI_DATA_WIDTH == 32)? {{C_S_AXI_ADDR_WIDTH - 2{1'b1}}, {2{1'b0}}} :
+                                                                  (C_S_AXI_DATA_WIDTH == 64)? {{C_S_AXI_ADDR_WIDTH - 3{1'b1}}, {3{1'b0}}} : {C_S_AXI_ADDR_WIDTH{1'b1}};
     
     localparam  AXI_FIXD_BURST  = 2'b00,
                 AXI_INCR_BURST  = 2'b01,
@@ -178,10 +175,6 @@ module hbmc_axi_top #
                 AXI_RESP_EXOKAY = 2'b01,
                 AXI_RESP_SLVERR = 2'b10,
                 AXI_RESP_DECERR = 2'b11;
-    
-    localparam  AXI_ADDR_ALIGN_MASK = (C_S_AXI_DATA_WIDTH == 16)? {{C_S_AXI_ADDR_WIDTH - 1{1'b1}}, {1{1'b0}}} :
-                                      (C_S_AXI_DATA_WIDTH == 32)? {{C_S_AXI_ADDR_WIDTH - 2{1'b1}}, {2{1'b0}}} :
-                                      (C_S_AXI_DATA_WIDTH == 64)? {{C_S_AXI_ADDR_WIDTH - 4{1'b1}}, {4{1'b0}}} : {C_S_AXI_ADDR_WIDTH{1'b1}};
     
     localparam  NO_REQ    = 2'b00,
                 WR_REQ    = 2'b01,
@@ -201,6 +194,7 @@ module hbmc_axi_top #
     reg             cmd_wr_not_rd;
     reg             cmd_wrap_not_incr;
     wire            cmd_ack;
+    
     
     /* Transfer state flags */
     reg             wr_addr_done;
@@ -237,6 +231,9 @@ module hbmc_axi_top #
     reg                                 axi_awready;
     reg                                 axi_arready;
     reg                                 axi_bvalid;
+    
+    wire    [C_S_AXI_ADDR_WIDTH - 1:0]  axi_awaddr_aligned = s_axi_awaddr & AXI_ADDR_ALIGN_MASK;
+    wire    [C_S_AXI_ADDR_WIDTH - 1:0]  axi_araddr_aligned = s_axi_araddr & AXI_ADDR_ALIGN_MASK;
     
     
     assign  s_axi_awready = axi_awready;
@@ -322,8 +319,9 @@ module hbmc_axi_top #
     task hbmc_config_wr_cmd;
     begin
         cmd_wr_not_rd     <= 1'b1;
-        cmd_mem_addr      <= (s_axi_awaddr & (C_MEMORY_SIZE_IN_BYTES - 1) & AXI_ADDR_ALIGN_MASK) >> 1;
-        cmd_word_cnt      <= (s_axi_awsize)? ((s_axi_awlen + 1'b1) << (s_axi_awsize - 1'b1)) : ((s_axi_awlen + 1'b1) >> 1);
+        cmd_mem_addr      <= (C_S_AXI_ADDR_WIDTH <= 32)? {{32 - C_S_AXI_ADDR_WIDTH + 1{1'b0}}, axi_awaddr_aligned[C_S_AXI_ADDR_WIDTH - 1:1]} :
+                                                                                               axi_awaddr_aligned[32:1];
+        cmd_word_cnt      <= (s_axi_awlen + 1'b1) << (clog2(C_S_AXI_DATA_WIDTH/8) - 1);
         cmd_wrap_not_incr <= (s_axi_awburst == AXI_WRAP_BURST)? 1'b1 : 1'b0;
     end
     endtask
@@ -332,8 +330,9 @@ module hbmc_axi_top #
     task hbmc_config_rd_cmd;
     begin
         cmd_wr_not_rd     <= 1'b0;
-        cmd_mem_addr      <= (s_axi_araddr & (C_MEMORY_SIZE_IN_BYTES - 1) & AXI_ADDR_ALIGN_MASK) >> 1;
-        cmd_word_cnt      <= (s_axi_arsize)? ((s_axi_arlen + 1'b1) << (s_axi_arsize - 1'b1)) : ((s_axi_arlen + 1'b1) >> 1);
+        cmd_mem_addr      <= (C_S_AXI_ADDR_WIDTH <= 32)? {{32 - C_S_AXI_ADDR_WIDTH + 1{1'b0}}, axi_araddr_aligned[C_S_AXI_ADDR_WIDTH - 1:1]} :
+                                                                                               axi_araddr_aligned[32:1];
+        cmd_word_cnt      <= (s_axi_arlen + 1'b1) << (clog2(C_S_AXI_DATA_WIDTH/8) - 1);
         cmd_wrap_not_incr <= (s_axi_arburst == AXI_WRAP_BURST)? 1'b1 : 1'b0;
     end
     endtask
@@ -536,7 +535,7 @@ module hbmc_axi_top #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  BUS_SYNC_WIDTH = 50;    // 32 + 16 + 1 + 1 = 50
+    localparam  BUS_SYNC_WIDTH = 32 + 16 + 1 + 1;
     
     wire            cmd_req_dst;
     wire            cmd_ack_dst;
