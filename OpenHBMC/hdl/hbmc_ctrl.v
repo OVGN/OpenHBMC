@@ -284,7 +284,7 @@ module hbmc_ctrl #
                         reg     [15:0]  dq_sdr_i;
     (* KEEP = "TRUE" *) reg     [7:0]   dq_t;
                         reg             dru_rstn;
-                        reg             dru_rwds_mask;
+                        reg             rwds_force_low;
                         reg     [7:0]   latency_tc;
                         reg     [7:0]   rwr_tc;
                         reg     [15:0]  power_up_tc;
@@ -496,11 +496,13 @@ module hbmc_ctrl #
     (
         .clk                ( clk_hbmc_0        ),
         .arstn              ( dru_rstn          ),
-        .rwds_mask          ( dru_rwds_mask     ),
+        .rwds_force_low     ( rwds_force_low    ),
         .rwds_oversampled   ( rwds_resync       ),
         .data_oversampled   ( data_resync       ),
         .recov_valid        ( hb_recov_data_vld ),
-        .recov_data         ( hb_recov_data     )
+        .recov_data         ( hb_recov_data     ),
+        .align_error        ( /*------NC-----*/ ),
+        .rwds_error         ( /*------NC-----*/ )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -650,7 +652,7 @@ module hbmc_ctrl #
             
             ST_RD_4: begin
                 if (latency_tc == 8'h00) begin
-                    dru_rwds_mask <= 1'b0;
+                    rwds_force_low <= 1'b0;
                     dq_t <= DQ_DIR_INPUT;
                     rd_state <= ST_RD_5;
                 end else begin
@@ -682,7 +684,7 @@ module hbmc_ctrl #
             ST_RD_8: begin
                 if (~hb_recov_data_vld) begin
                     dru_rstn <= 1'b0;
-                    dru_rwds_mask <= 1'b1;
+                    rwds_force_low <= 1'b1;
                     rd_state <= ST_RD_DONE;
                 end
             end
@@ -756,7 +758,7 @@ module hbmc_ctrl #
         dq_sdr_i        <= {16{1'b0}};
         dq_t            <= DQ_DIR_INPUT;
         dru_rstn        <= 1'b0;
-        dru_rwds_mask   <= 1'b1;
+        rwds_force_low  <= 1'b1;
         latency_tc      <=  {8{1'b0}};
         power_up_tc     <= {16{1'b0}};
         hram_id_reg     <= {16{1'b0}};
