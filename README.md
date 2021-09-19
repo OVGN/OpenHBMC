@@ -41,6 +41,8 @@ IP-core is packed for easy Vivado 2020.2 block design integration.
 - ~~Achieve 200MHz HyperBus clock frequency.~~ DONE.
 - ~~Add advanced RWDS strobe delay calibration procedure.~~ DONE. No more calibration needed.
 - ~~Helloworld example project.~~ DONE.
+- Add command queuing to maximize HyperRAM bus utilization. 
+- Replace Xilinx FIFOs IP cores with custom FIFOs.
 - Add AXI4-Lite slave port for configuration registers access.
 - Add multi-bank (commom data bus) modes to increase memory bandwidth. Dual or Quad rank modes?
 - Add HyperFlash support.
