@@ -12,6 +12,7 @@ IP-core is packed for easy Vivado 2020.2 block design integration.
 - Supports HyperRAM 1.0 and HyperRAM 2.0
 - Supports 3.3V & 1.8V power modes
 - Supports AXI4 data width of 16/32/64-bit 
+- Supports AXI4 address width up to 64-bit 
 - Supports all AXI4 burst types and sizes:
     - AXI4 INCR burst sizes up to 256 data beats (long transfers are automatically splitted into parts to meet maximum CS# low limitation)
     - AXI4 FIXED bursts are treated as INCR burst type
