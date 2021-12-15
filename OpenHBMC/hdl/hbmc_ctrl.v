@@ -17,6 +17,7 @@
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * ----------------------------------------------------------------------------
  */
 
@@ -283,8 +284,7 @@ module hbmc_ctrl #
                         reg             rwds_t;
                         reg     [15:0]  dq_sdr_i;
     (* KEEP = "TRUE" *) reg     [7:0]   dq_t;
-                        reg             dru_rstn;
-                        reg             rwds_force_low;
+                        reg             dru_iserdes_rstn;
                         reg     [7:0]   latency_tc;
                         reg     [7:0]   rwr_tc;
                         reg     [15:0]  power_up_tc;
@@ -398,7 +398,7 @@ module hbmc_ctrl #
     )
     hbmc_iobuf_rwds
     (
-        .arstn          ( rstn              ),
+        .arstn          ( dru_iserdes_rstn  ),
         .oddr_clk       ( clk_hbmc_0        ),
         .iserdes_clk    ( iserdes_clk_iobuf ),
         .iserdes_clkdiv ( iserdes_clkdiv    ),
@@ -448,11 +448,11 @@ module hbmc_ctrl #
             )
             hbmc_iobuf_dq
             (
-                .arstn          ( rstn              ),
-                .oddr_clk       ( clk_hbmc_0        ),
-                .iserdes_clk    ( iserdes_clk_iobuf ),
-                .iserdes_clkdiv ( iserdes_clkdiv    ),
-                .idelay_clk     ( clk_idelay_ref    ),
+                .arstn          ( rstn                            ),
+                .oddr_clk       ( clk_hbmc_0                      ),
+                .iserdes_clk    ( iserdes_clk_iobuf               ),
+                .iserdes_clkdiv ( iserdes_clkdiv                  ),
+                .idelay_clk     ( clk_idelay_ref                  ),
                 
                 .buf_io         ( hb_dq[i]                        ),
                 .buf_t          ( dq_t[i]                         ),
@@ -495,8 +495,7 @@ module hbmc_ctrl #
     hbmc_dru_inst
     (
         .clk                ( clk_hbmc_0        ),
-        .arstn              ( dru_rstn          ),
-        .rwds_force_low     ( rwds_force_low    ),
+        .arstn              ( dru_iserdes_rstn  ),
         .rwds_oversampled   ( rwds_resync       ),
         .data_oversampled   ( data_resync       ),
         .recov_valid        ( hb_recov_data_vld ),
@@ -626,7 +625,6 @@ module hbmc_ctrl #
                 if (rwr_tc >= MIN_RWR) begin
                     cs_n      <= 1'b0;
                     ck_ena    <= 1'b1;
-                    dru_rstn  <= 1'b1;
                     burst_cnt <= 16'd0;
                     rwds_t    <= RWDS_DIR_INPUT;
                     dq_t      <= DQ_DIR_OUTPUT;
@@ -651,8 +649,8 @@ module hbmc_ctrl #
             end
             
             ST_RD_4: begin
+                dru_iserdes_rstn <= 1'b1;
                 if (latency_tc == 8'h00) begin
-                    rwds_force_low <= 1'b0;
                     dq_t <= DQ_DIR_INPUT;
                     rd_state <= ST_RD_5;
                 end else begin
@@ -683,8 +681,7 @@ module hbmc_ctrl #
             
             ST_RD_8: begin
                 if (~hb_recov_data_vld) begin
-                    dru_rstn <= 1'b0;
-                    rwds_force_low <= 1'b1;
+                    dru_iserdes_rstn <= 1'b0;
                     rd_state <= ST_RD_DONE;
                 end
             end
@@ -744,36 +741,35 @@ module hbmc_ctrl #
 
     task local_rst;
     begin
-        wr_state        <= FSM_WR_RESET_STATE;
-        rd_state        <= FSM_RD_RESET_STATE;
+        wr_state         <= FSM_WR_RESET_STATE;
+        rd_state         <= FSM_RD_RESET_STATE;
         
-        cr0_reg         <= CR0_INIT;
-        cr1_reg         <= CR1_INIT;
+        cr0_reg          <= CR0_INIT;
+        cr1_reg          <= CR1_INIT;
         
-        reset_n         <= 1'b0;
-        cs_n            <= 1'b1;
-        ck_ena          <= 1'b0;
-        rwds_sdr_i      <= 2'b00;
-        rwds_t          <= RWDS_DIR_INPUT;
-        dq_sdr_i        <= {16{1'b0}};
-        dq_t            <= DQ_DIR_INPUT;
-        dru_rstn        <= 1'b0;
-        rwds_force_low  <= 1'b1;
-        latency_tc      <=  {8{1'b0}};
-        power_up_tc     <= {16{1'b0}};
-        hram_id_reg     <= {16{1'b0}};
-        fifo_rd         <= 1'b0;
-        mem_access      <= 1'b0;
-        word_last       <= 1'b0;
-        ca              <= {48{1'b0}};
-        burst_cnt       <= {16{1'b0}};
-        burst_size      <= {16{1'b0}};
-        word_count      <= {16{1'b0}};
-        word_count_prev <= {16{1'b0}};
-        mem_addr        <= {32{1'b0}};
-        wr_not_rd       <= 1'b0;
-        wrap_not_incr   <= 1'b0;
-        cmd_ack         <= 1'b0;
+        reset_n          <= 1'b0;
+        cs_n             <= 1'b1;
+        ck_ena           <= 1'b0;
+        rwds_sdr_i       <= 2'b00;
+        rwds_t           <= RWDS_DIR_INPUT;
+        dq_sdr_i         <= {16{1'b0}};
+        dq_t             <= DQ_DIR_INPUT;
+        dru_iserdes_rstn <= 1'b0;
+        latency_tc       <=  {8{1'b0}};
+        power_up_tc      <= {16{1'b0}};
+        hram_id_reg      <= {16{1'b0}};
+        fifo_rd          <= 1'b0;
+        mem_access       <= 1'b0;
+        word_last        <= 1'b0;
+        ca               <= {48{1'b0}};
+        burst_cnt        <= {16{1'b0}};
+        burst_size       <= {16{1'b0}};
+        word_count       <= {16{1'b0}};
+        word_count_prev  <= {16{1'b0}};
+        mem_addr         <= {32{1'b0}};
+        wr_not_rd        <= 1'b0;
+        wrap_not_incr    <= 1'b0;
+        cmd_ack          <= 1'b0;
     end
     endtask
     

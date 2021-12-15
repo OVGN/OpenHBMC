@@ -16,6 +16,7 @@
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * ----------------------------------------------------------------------------
  */
 
@@ -109,7 +110,6 @@ module hbmc_dru
 (
     input   wire            clk,
     input   wire            arstn,
-    input   wire            rwds_force_low,
     input   wire    [5:0]   rwds_oversampled,
     input   wire    [47:0]  data_oversampled,
     output  wire            recov_valid,
@@ -140,14 +140,14 @@ module hbmc_dru
             prev_last_bit <= rwds_oversampled[5];
             
             /* RWDS edge detection vector */
-            rwds_pair_xor <= (rwds_force_low)? {6{1'b0}} :  {
-                                                                ^ rwds_oversampled[5:4],
-                                                                ^ rwds_oversampled[4:3],
-                                                                ^ rwds_oversampled[3:2],
-                                                                ^ rwds_oversampled[2:1],
-                                                                ^ rwds_oversampled[1:0],
-                                                                  rwds_oversampled[0] ^ prev_last_bit
-                                                            };
+            rwds_pair_xor <= {
+                                 ^ rwds_oversampled[5:4],
+                                 ^ rwds_oversampled[4:3],
+                                 ^ rwds_oversampled[3:2],
+                                 ^ rwds_oversampled[2:1],
+                                 ^ rwds_oversampled[1:0],
+                                   rwds_oversampled[0] ^ prev_last_bit
+                             };
         end
     end
     
