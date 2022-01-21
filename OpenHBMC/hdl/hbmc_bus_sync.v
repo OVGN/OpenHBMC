@@ -4,7 +4,7 @@
  *  Filename: hbmc_bus_sync.v
  *  Purpose:  Bus synchronizer with fast handshake logic.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2022, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.

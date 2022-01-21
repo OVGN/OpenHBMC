@@ -164,7 +164,7 @@ OpenHBMC IP-core v2.0
   set License [ipgui::add_group $IPINST -name "License" -parent ${About}]
   ipgui::add_static_text $IPINST -name "Text1" -parent ${License} -text {
 Licensed under the Apache License, Version 2.0
-Copyright © 2020 - 2021, Vaagn Oganesyan, ovgn@protonmail.com
+Copyright © 2020 - 2022, Vaagn Oganesyan, ovgn@protonmail.com
 Repo: github.com/OVGN/OpenHBMC
 }
 

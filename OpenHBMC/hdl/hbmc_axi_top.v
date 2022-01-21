@@ -4,7 +4,7 @@
  *  Filename: hbmc_axi_top.v
  *  Purpose:  HyperBus memory controller AXI4 wrapper top module.
  * ----------------------------------------------------------------------------
- *  Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
+ *  Copyright © 2020-2022, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ module hbmc_axi_top #
     input   wire    [3:0]                       s_axi_awqos,    // unused
     input   wire    [2:0]                       s_axi_awprot,   // unused
     input   wire                                s_axi_awvalid,
-    output  wire                                s_axi_awready,
+    output  reg                                 s_axi_awready,
 
     /* AXI4 Slave Interface Write Data Ports */
     input   wire    [C_S_AXI_DATA_WIDTH-1:0]    s_axi_wdata,
@@ -101,10 +101,10 @@ module hbmc_axi_top #
     output  wire                                s_axi_wready,
 
     /* AXI4 Slave Interface Write Response Ports */
-    output  wire    [C_S_AXI_ID_WIDTH-1:0]      s_axi_bid,
+    output  reg     [C_S_AXI_ID_WIDTH-1:0]      s_axi_bid,
     output  wire    [C_S_AXI_BUSER_WIDTH-1:0]   s_axi_buser,    // unused
     output  wire    [1:0]                       s_axi_bresp,
-    output  wire                                s_axi_bvalid,
+    output  reg                                 s_axi_bvalid,
     input   wire                                s_axi_bready,
 
     /* AXI4 Interface Read Address Ports */
@@ -120,10 +120,10 @@ module hbmc_axi_top #
     input   wire    [3:0]                       s_axi_arqos,    // unused
     input   wire    [2:0]                       s_axi_arprot,   // unused
     input   wire                                s_axi_arvalid,
-    output  wire                                s_axi_arready,
+    output  reg                                 s_axi_arready,
 
     /* AXI4 Slave Interface Read Data Ports */
-    output  wire    [C_S_AXI_ID_WIDTH-1:0]      s_axi_rid,
+    output  reg     [C_S_AXI_ID_WIDTH-1:0]      s_axi_rid,
     output  wire    [C_S_AXI_DATA_WIDTH-1:0]    s_axi_rdata,
     output  wire    [C_S_AXI_RUSER_WIDTH-1:0]   s_axi_ruser,    // unused
     output  wire    [1:0]                       s_axi_rresp,
@@ -198,14 +198,21 @@ module hbmc_axi_top #
     
     
     /* Transfer state flags */
-    reg             wr_addr_done;
-    reg             wr_data_done;
     reg             wr_xfer_done;
     reg             rd_xfer_done;
     
+    reg     [11:0]  wr_data_pkt_cnt;
     
+    wire            rd_addr_done     = s_axi_arvalid & s_axi_arready;
+    wire            rd_data_done     = s_axi_rvalid  & s_axi_rready & s_axi_rlast;
+    
+    wire            wr_addr_done     = s_axi_awvalid & s_axi_awready;
+    wire            wr_data_done     = s_axi_wvalid  & s_axi_wready & s_axi_wlast;
+    wire            wr_resp_done     = s_axi_bvalid  & s_axi_bready;
+    wire            wr_data_pending  = (wr_data_pkt_cnt > {12{1'b0}});
+    
+    wire            axi_wr_condition = s_axi_awvalid & wr_xfer_done & wr_data_pending;
     wire            axi_rd_condition = s_axi_arvalid & rd_xfer_done;
-    wire            axi_wr_condition = s_axi_awvalid & wr_data_done;
     
     
     /* Read data FIFO wires */
@@ -228,28 +235,18 @@ module hbmc_axi_top #
     wire                                wfifo_wr_ena  = s_axi_wvalid & s_axi_wready;
     wire                                wfifo_wr_full;
     
-    reg     [C_S_AXI_ID_WIDTH-1:0]      axi_axid;
-    reg                                 axi_awready;
-    reg                                 axi_arready;
-    reg                                 axi_bvalid;
     
     wire    [C_S_AXI_ADDR_WIDTH - 1:0]  axi_awaddr_aligned = s_axi_awaddr & AXI_ADDR_ALIGN_MASK;
     wire    [C_S_AXI_ADDR_WIDTH - 1:0]  axi_araddr_aligned = s_axi_araddr & AXI_ADDR_ALIGN_MASK;
     
     
-    assign  s_axi_awready = axi_awready;
-    assign  s_axi_arready = axi_arready;
-    
-    assign  s_axi_rid     = axi_axid;
     assign  s_axi_rresp   = AXI_RESP_OKAY;
     assign  s_axi_rdata   =  rfifo_rd_dout;
     assign  s_axi_rlast   =  rfifo_rd_last;
     assign  s_axi_rvalid  = ~rfifo_rd_empty;
     
     assign  s_axi_wready  = ~wfifo_wr_full;
-    assign  s_axi_bid     = axi_axid;
     assign  s_axi_bresp   = AXI_RESP_OKAY;
-    assign  s_axi_bvalid  = axi_bvalid;
     
     generate
         if (C_S_AXI_BUSER_WIDTH > 0) begin
@@ -340,13 +337,12 @@ module hbmc_axi_top #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  ST_RST           = 3'd0,
-                ST_XFER_SEL      = 3'd1,
-                ST_XFER_INIT     = 3'd2,
-                ST_WAIT_START    = 3'd3,
-                ST_WAIT_COMPLETE = 3'd4;
+    localparam  ST_RST       = 2'd0,
+                ST_XFER_SEL  = 2'd1,
+                ST_XFER_INIT = 2'd2,
+                ST_XFER_RUN  = 2'd3;
     
-    reg     [2:0]   state;
+    reg     [1:0]   state;
     
     
     /* Main transaction processing FSM */
@@ -357,22 +353,22 @@ module hbmc_axi_top #
             cmd_mem_addr      <= {32{1'b0}};
             cmd_word_cnt      <= {16{1'b0}};
             cmd_wrap_not_incr <= 1'b0;
-            axi_awready       <= 1'b0;
-            axi_arready       <= 1'b0;
-            axi_axid          <= {C_S_AXI_ID_WIDTH{1'b0}};
+            s_axi_awready     <= 1'b0;
+            s_axi_arready     <= 1'b0;
+            s_axi_rid         <= {C_S_AXI_ID_WIDTH{1'b0}};
+            s_axi_bid         <= {C_S_AXI_ID_WIDTH{1'b0}};
             state             <= ST_RST;
         end else begin
             case (state)
                 ST_RST: begin
-                    cmd_req     <= 1'b0;
-                    axi_awready <= 1'b0;
-                    axi_arready <= 1'b0;
+                    cmd_req       <= 1'b0;
+                    s_axi_awready <= 1'b0;
+                    s_axi_arready <= 1'b0;
                     
                     if (idelayctrl_rdy_sync) begin
                         state <= ST_XFER_SEL;
                     end
                 end
-                
                 
                 ST_XFER_SEL: begin
                     case ({axi_rd_condition, axi_wr_condition})
@@ -384,16 +380,16 @@ module hbmc_axi_top #
                         
                         /* New AXI write request */
                         WR_REQ: begin
-                            axi_awready <= 1'b1;
-                            axi_axid <= s_axi_awid;
+                            s_axi_awready <= 1'b1;
+                            s_axi_bid <= s_axi_awid;
                             hbmc_config_wr_cmd();
                             state <= ST_XFER_INIT;
                         end
                         
                         /* New AXI read request */
                         RD_REQ: begin
-                            axi_arready <= 1'b1;
-                            axi_axid <= s_axi_arid;
+                            s_axi_arready <= 1'b1;
+                            s_axi_rid <= s_axi_arid;
                             hbmc_config_rd_cmd();
                             state <= ST_XFER_INIT;
                         end
@@ -403,12 +399,12 @@ module hbmc_axi_top #
                             /* Simple round-robin, based 
                              * on the previous operation */
                             if (cmd_wr_not_rd) begin
-                                axi_arready <= 1'b1;
-                                axi_axid <= s_axi_arid;
+                                s_axi_arready <= 1'b1;
+                                s_axi_rid <= s_axi_arid;
                                 hbmc_config_rd_cmd();
                             end else begin
-                                axi_awready <= 1'b1;
-                                axi_axid <= s_axi_awid;
+                                s_axi_awready <= 1'b1;
+                                s_axi_bid <= s_axi_awid;
                                 hbmc_config_wr_cmd();
                             end
                             
@@ -417,34 +413,20 @@ module hbmc_axi_top #
                     endcase
                 end
                 
-                
                 ST_XFER_INIT: begin
-                    axi_awready <= 1'b0;
-                    axi_arready <= 1'b0;
+                    s_axi_awready <= 1'b0;
+                    s_axi_arready <= 1'b0;
                     if (~cmd_ack) begin
                         cmd_req <= 1'b1;
-                        state   <= ST_WAIT_START;
+                        state   <= ST_XFER_RUN;
                     end
                 end
                 
-                
-                ST_WAIT_START: begin
+                ST_XFER_RUN: begin
                     if (cmd_ack) begin
                         cmd_req <= 1'b0;
-                        state <= ST_WAIT_COMPLETE;
-                    end
-                end
-                
-                
-                ST_WAIT_COMPLETE: begin
-                    if ((cmd_wr_not_rd & wr_xfer_done) || (~cmd_wr_not_rd & rd_xfer_done)) begin
                         state <= ST_XFER_SEL;
                     end
-                end
-                
-                
-                default: begin
-                    state <= ST_RST;
                 end
             endcase
         end
@@ -457,13 +439,29 @@ module hbmc_axi_top #
         if (~s_axi_aresetn) begin
             rd_xfer_done <= 1'b1;
         end else begin
-            if (s_axi_arvalid & s_axi_arready) begin
+            if (rd_addr_done) begin
                 rd_xfer_done <= 1'b0;
+            end else begin
+                if (rd_data_done) begin
+                    rd_xfer_done <= 1'b1;
+                end
             end
+        end
+    end
 
-            if (s_axi_rvalid & s_axi_rready & s_axi_rlast) begin
-                rd_xfer_done <= 1'b1;
-            end
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    /* Pending AXI write data packets counter */
+    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (~s_axi_aresetn) begin
+            wr_data_pkt_cnt <= {12{1'b0}};
+        end else begin
+            case ({wr_resp_done, wr_data_done})
+                2'b00,
+                2'b11: wr_data_pkt_cnt <= wr_data_pkt_cnt;
+                2'b01: wr_data_pkt_cnt <= wr_data_pkt_cnt + 1'b1;
+                2'b10: wr_data_pkt_cnt <= wr_data_pkt_cnt - 1'b1;
+            endcase
         end
     end
 
@@ -478,39 +476,25 @@ module hbmc_axi_top #
     /* AXI write responding FSM */
     always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (~s_axi_aresetn) begin
-            wr_addr_done <= 1'b0;
-            wr_data_done <= 1'b0;
             wr_xfer_done <= 1'b1;
-            axi_bvalid   <= 1'b0;
+            s_axi_bvalid <= 1'b0;
             state_bresp  <= ST_BRESP_IDLE;
         end else begin
             case (state_bresp)
                 ST_BRESP_IDLE: begin
-                    
-                    /* Detecting write address reception */
-                    if (s_axi_awvalid & s_axi_awready) begin
-                        wr_addr_done <= 1'b1;
+                    /* Start responding when AW was accepted and 
+                     * there is pending write data packet in FIFO */
+                    if (wr_addr_done & wr_data_pending) begin
                         wr_xfer_done <= 1'b0;
-                    end
-                    
-                    /* Detecting the end of write transfer */
-                    if (s_axi_wvalid & s_axi_wready & s_axi_wlast) begin
-                        wr_data_done <= 1'b1;
-                    end
-                    
-                    /* Start responding only when both address and data are received */
-                    if (wr_addr_done & wr_data_done) begin
-                        axi_bvalid  <= 1'b1;
-                        state_bresp <= ST_BRESP_SEND;
+                        s_axi_bvalid <= 1'b1;
+                        state_bresp  <= ST_BRESP_SEND;
                     end
                 end
                 
                 ST_BRESP_SEND: begin
-                    if (s_axi_bready) begin
-                        wr_addr_done <= 1'b0;
-                        wr_data_done <= 1'b0;
+                    if (wr_resp_done) begin
                         wr_xfer_done <= 1'b1;
-                        axi_bvalid   <= 1'b0;
+                        s_axi_bvalid <= 1'b0;
                         state_bresp  <= ST_BRESP_IDLE;
                     end
                 end
@@ -540,6 +524,7 @@ module hbmc_axi_top #
     
     wire            cmd_req_dst;
     wire            cmd_ack_dst;
+    
     wire    [31:0]  cmd_mem_addr_dst;
     wire    [15:0]  cmd_word_cnt_dst;
     wire            cmd_wr_not_rd_dst;
