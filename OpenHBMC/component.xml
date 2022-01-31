@@ -531,7 +531,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>7afc59e7</spirit:value>
+            <spirit:value>e3c24398</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -556,7 +556,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>7afc59e7</spirit:value>
+            <spirit:value>7a758e4c</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1901,29 +1901,33 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogsynthesis_view_fileset</spirit:name>
       <spirit:file>
+        <spirit:name>constrs/OpenHBMC.xdc</spirit:name>
+        <spirit:userFileType>xdc</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_dfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/wFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_dfifo_inst/dFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/rFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/uFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hbmc_arst_sync.v</spirit:name>
@@ -1946,6 +1950,10 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/hbmc_dfifo.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/hbmc_dru.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
@@ -1958,17 +1966,13 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hbmc_rfifo.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/hbmc_wfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_ufifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hbmc_axi_top.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_47e45c22</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_b45dc897</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -2006,27 +2010,27 @@
       <spirit:file>
         <spirit:name>hdl/ip/fifo_72b_18b_512w/fifo_72b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_dfifo_inst/fifo_72b_18b_512w/fifo_72b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_18b_512w/fifo_18b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/fifo_18b_18b_512w/fifo_18b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_36b_18b_512w/fifo_36b_18b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_wfifo_inst/wFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_dfifo_inst/dFIFO_36b_18b_512w.fifo_36b_18b_512w_inst/fifo_36b_18b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_72b_512w/fifo_18b_72b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/fifo_18b_72b_512w/fifo_18b_72b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ip/fifo_18b_36b_512w/fifo_18b_36b_512w.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_hbmc_rfifo_inst/rFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_hbmc_ufifo_inst/uFIFO_18b_36b_512w.fifo_18b_36b_512w_inst/fifo_18b_36b_512w</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/hbmc_arst_sync.v</spirit:name>
@@ -2049,6 +2053,10 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/hbmc_dfifo.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/hbmc_dru.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
@@ -2061,11 +2069,7 @@
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>hdl/hbmc_rfifo.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/hbmc_wfifo.v</spirit:name>
+        <spirit:name>hdl/hbmc_ufifo.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -2108,7 +2112,7 @@
       <spirit:file>
         <spirit:name>xgui/OpenHBMC_v2_0.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_8cb22966</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_9782656d</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -2226,17 +2230,17 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_FPGA_DRIVE_STRENGTH</spirit:name>
-      <spirit:displayName>FPGA CK, DQ, RWDS Drive Strength</spirit:displayName>
+      <spirit:displayName>FPGA Buffers Drive Strength</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_FPGA_DRIVE_STRENGTH" spirit:choiceRef="choice_pairs_92e21856">8</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_MEM_DRIVE_STRENGTH</spirit:name>
-      <spirit:displayName>Memory DQ, RWDS Drive Strength</spirit:displayName>
+      <spirit:displayName>Memory Buffers Drive Strength</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_MEM_DRIVE_STRENGTH" spirit:choiceRef="choice_pairs_13f1228f">46</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>C_HBMC_FPGA_SLEW_RATE</spirit:name>
-      <spirit:displayName>FPGA CK, DQ, RWDS Slew Rate</spirit:displayName>
+      <spirit:displayName>FPGA Buffers Slew Rate</spirit:displayName>
       <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.C_HBMC_FPGA_SLEW_RATE" spirit:choiceRef="choice_list_aa593469">SLOW</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
@@ -2421,11 +2425,11 @@
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>OVGN</xilinx:vendorDisplayName>
       <xilinx:vendorURL>https://github.com/OVGN/OpenHBMC</xilinx:vendorURL>
-      <xilinx:coreRevision>82</xilinx:coreRevision>
+      <xilinx:coreRevision>83</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>xilinx.com:user:OpenHBMC:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2022-01-21T00:26:57Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2022-01-31T01:10:40Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
       </xilinx:tags>
     </xilinx:coreExtensions>
@@ -2433,10 +2437,10 @@
       <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="784528ef"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="96ea5e8c"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="512f0d6c"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="a245d147"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="90ca30e1"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="0de667aa"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="e96dcf02"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="b79447e4"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>

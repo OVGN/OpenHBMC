@@ -26,27 +26,28 @@
 `timescale 1ps / 1ps
 
 
+(* KEEP_HIERARCHY = "TRUE" *)
 module hbmc_arst_sync #
 (
     parameter integer C_SYNC_STAGES = 3
 )
 (
     input   wire    clk,
-    input   wire    arstn,
-    output  wire    rstn
+    input   wire    arst,
+    output  wire    rst
 );
     
     hbmc_bit_sync #
     (
         .C_SYNC_STAGES  ( C_SYNC_STAGES ),
-        .C_RESET_STATE  ( 1'b0          )
+        .C_RESET_STATE  ( 1'b1          )
     )
     hbmc_bit_sync_inst
     (
-        .arstn  ( arstn ),
-        .clk    ( clk   ),
-        .d      ( 1'b1  ),
-        .q      ( rstn  )
+        .arst   ( arst ),
+        .clk    ( clk  ),
+        .d      ( 1'b0 ),
+        .q      ( rst  )
     );
     
 endmodule

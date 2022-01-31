@@ -25,6 +25,7 @@
 `timescale 1ps / 1ps
 
 
+(* KEEP_HIERARCHY = "TRUE" *)
 module hbmc_bus_sync #
 (
     parameter integer C_SYNC_STAGES = 3,
@@ -32,13 +33,13 @@ module hbmc_bus_sync #
 )
 (
     input   wire                            src_clk,
-    input   wire                            src_rstn,
+    input   wire                            src_rst,
     input   wire    [C_DATA_WIDTH - 1 : 0]  src_data,
     input   wire                            src_req,
     output  wire                            src_ack,
 
     input   wire                            dst_clk,
-    input   wire                            dst_rstn,
+    input   wire                            dst_rst,
     output  reg     [C_DATA_WIDTH - 1 : 0]  dst_data,
     output  reg                             dst_req,
     input   wire                            dst_ack
@@ -56,10 +57,10 @@ module hbmc_bus_sync #
     )
     hbmc_bit_sync_inst_0
     (
-        .arstn  ( dst_rstn      ),
-        .clk    ( dst_clk       ),
-        .d      ( src_req       ),
-        .q      ( src_req_sync  )
+        .arst   ( dst_rst      ),
+        .clk    ( dst_clk      ),
+        .d      ( src_req      ),
+        .q      ( src_req_sync )
     );
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -74,7 +75,7 @@ module hbmc_bus_sync #
     )
     hbmc_bit_sync_inst_1
     (
-        .arstn  ( src_rstn      ),
+        .arst   ( src_rst       ),
         .clk    ( src_clk       ),
         .d      ( src_ack_async ),
         .q      ( src_ack       )
@@ -82,49 +83,40 @@ module hbmc_bus_sync #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
-    localparam  [1:0]   ST_RST       = 2'd0,
-                        ST_SRC_REQ   = 2'd1,
-                        ST_DST_ACK   = 2'd2,
-                        ST_HANDSHAKE = 2'd3;
-    
-    reg         [1:0]   state;
+    localparam  ST_GET = 1'b0,
+                ST_SET = 1'b1;
+
+    reg         state;
 
 
-    always @(posedge dst_clk or negedge dst_rstn) begin
-        if (~dst_rstn) begin
+    always @(posedge dst_clk or posedge dst_rst) begin
+        if (dst_rst) begin
             src_ack_async <= 1'b0;
             dst_req       <= 1'b0;
             dst_data      <= {C_DATA_WIDTH{1'b0}};
-            state         <= ST_RST;
+            state         <= ST_GET;
         end else begin
             case (state)
-                ST_RST: begin
-                    src_ack_async <= 1'b0;
-                    dst_req       <= 1'b0;
-                    dst_data      <= {C_DATA_WIDTH{1'b0}};
-                    state         <= ST_SRC_REQ;
-                end
-                
-                ST_SRC_REQ: begin
+                ST_GET: begin
                     if (src_req_sync & ~dst_ack) begin
-                        dst_req  <= 1'b1;
-                        dst_data <= src_data;
-                        state    <= ST_DST_ACK;
-                    end
-                end
-                
-                ST_DST_ACK: begin
-                    if (dst_ack) begin
                         src_ack_async <= 1'b1;
-                        dst_req       <= 1'b0;
-                        state         <= ST_HANDSHAKE;
+                        dst_req       <= 1'b1;
+                        dst_data      <= src_data;
+                        state         <= ST_SET;
                     end
                 end
                 
-                ST_HANDSHAKE: begin
+                ST_SET: begin
+                    if (dst_ack) begin
+                        dst_req <= 1'b0;
+                    end
+                    
                     if (~src_req_sync) begin
                         src_ack_async <= 1'b0;
-                        state         <= ST_SRC_REQ;
+                    end
+                    
+                    if (~dst_req & ~src_ack_async) begin
+                        state <= ST_GET;
                     end
                 end
             endcase

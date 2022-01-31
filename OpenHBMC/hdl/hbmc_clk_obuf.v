@@ -101,8 +101,6 @@ module hbmc_clk_obuf #
         .I  ( oddr_clk_n ),     // Buffer input
         .O  ( hb_ck_n    )      // Buffer output (connect directly to top-level port)
     );
-    
-    
 
 endmodule
 

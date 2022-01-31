@@ -25,13 +25,14 @@
 `timescale 1ps / 1ps
 
 
+(* KEEP_HIERARCHY = "TRUE" *)
 module hbmc_bit_sync #
 (
     parameter integer C_SYNC_STAGES = 3,
     parameter         C_RESET_STATE = 1'b0
 )
 (
-    input   wire    arstn,
+    input   wire    arst,
     input   wire    clk,
     input   wire    d,
     output  wire    q
@@ -40,8 +41,8 @@ module hbmc_bit_sync #
     (* shreg_extract = "no", ASYNC_REG = "TRUE" *)  reg [C_SYNC_STAGES - 1:0] d_sync;
     
     
-    always @(posedge clk or negedge arstn) begin
-        if (~arstn) begin
+    always @(posedge clk or posedge arst) begin
+        if (arst) begin
             d_sync <= {C_SYNC_STAGES{C_RESET_STATE}};
         end else begin
             d_sync <= {d_sync[C_SYNC_STAGES - 2:0], d};

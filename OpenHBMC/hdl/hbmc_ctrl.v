@@ -60,26 +60,26 @@ module hbmc_ctrl #
     parameter   [4:0]   C_DQ0_IDELAY_TAPS_VALUE  = 0
 )
 (
-    input   wire            rstn,
+    input   wire            rst,
     input   wire            clk_hbmc_0,
     input   wire            clk_hbmc_90,
     input   wire            clk_iserdes,
     input   wire            clk_idelay_ref,
     
-    input   wire            cmd_req,
-    output  reg             cmd_ack,
+    input   wire            cmd_valid,
+    output  reg             cmd_ready,
     input   wire    [31:0]  cmd_mem_addr,
     input   wire    [15:0]  cmd_word_count,
     input   wire            cmd_wr_not_rd,
     input   wire            cmd_wrap_not_incr,
     
-    output  wire    [15:0]  fifo_dout,
-    output  wire            fifo_dout_last,
-    output  wire            fifo_dout_we,
+    output  wire    [15:0]  ufifo_data,         // Upstream FIFO data
+    output  wire            ufifo_last,         // Upstream FIFO data last word strobe
+    output  wire            ufifo_we,           // Upstream FIFO write enable
     
-    input   wire    [15:0]  fifo_din,
-    input   wire    [1:0]   fifo_din_strb,
-    output  wire            fifo_din_re,
+    input   wire    [15:0]  dfifo_data,         // Downstream FIFO data
+    input   wire    [1:0]   dfifo_strb,         // Downstream FIFO data byte enable strobes
+    output  wire            dfifo_re,           // Downstream FIFO read enable
     
     output  wire            hb_ck_p,
     output  wire            hb_ck_n,
@@ -138,7 +138,7 @@ module hbmc_ctrl #
                                           (C_HBMC_CLOCK_HZ <= 166000000)? 6 :       /* Min initial latency for <= 166MHz */
                                           (C_HBMC_CLOCK_HZ <= 200000000)? 7 : 7;    /* Min initial latency for <= 200MHz */      
     
-    localparam  integer MIN_RWR = INITIAL_LATENCY;                                  /* Min Read-Write recovery time */
+    localparam  integer MIN_RWR = INITIAL_LATENCY - 3;                              /* Min Read-Write recovery time */
     
     localparam  integer MAX_BURST_COUNT = ((C_HBMC_CS_MAX_LOW_TIME_US * 1000) / HBMC_CLOCK_PERIOD_NS - INITIAL_LATENCY * 3);    /* x3 - is a margin */
     
@@ -203,20 +203,20 @@ module hbmc_ctrl #
                 CA_BURST_LINEAR  = 48'h2000_0000_0000,
                 CA_BURST_WRAPPED = 48'h0000_0000_0000;
     
-    localparam  ID0_REG_ADDR = 48'h0000_0000_0000_0000,
-                ID1_REG_ADDR = 48'h0000_0000_0000_0001,
-                CR0_REG_ADDR = 48'h0000_0000_0100_0000,
-                CR1_REG_ADDR = 48'h0000_0000_0100_0001;
+    localparam  ID0_REG_ADDR     = 48'h0000_0000_0000,
+                ID1_REG_ADDR     = 48'h0000_0000_0001,
+                CR0_REG_ADDR     = 48'h0000_0100_0000,
+                CR1_REG_ADDR     = 48'h0000_0100_0001;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam  CR_0_DRIVE_STRENGTH = (C_HBMC_MEM_DRIVE_STRENGTH ==  19)? CR_0_DRIVE_STRENGTH_19  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH ==  22)? CR_0_DRIVE_STRENGTH_22  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH ==  27)? CR_0_DRIVE_STRENGTH_27  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH ==  34)? CR_0_DRIVE_STRENGTH_34  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH ==  46)? CR_0_DRIVE_STRENGTH_46  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH ==  67)? CR_0_DRIVE_STRENGTH_67  :
-                                      (C_HBMC_MEM_DRIVE_STRENGTH == 115)? CR_0_DRIVE_STRENGTH_115 : CR_0_DRIVE_STRENGTH_34_DEFAULT;
+    localparam  CR_0_DRIVE_STRENGTH  = (C_HBMC_MEM_DRIVE_STRENGTH ==  19)? CR_0_DRIVE_STRENGTH_19  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH ==  22)? CR_0_DRIVE_STRENGTH_22  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH ==  27)? CR_0_DRIVE_STRENGTH_27  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH ==  34)? CR_0_DRIVE_STRENGTH_34  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH ==  46)? CR_0_DRIVE_STRENGTH_46  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH ==  67)? CR_0_DRIVE_STRENGTH_67  :
+                                       (C_HBMC_MEM_DRIVE_STRENGTH == 115)? CR_0_DRIVE_STRENGTH_115 : CR_0_DRIVE_STRENGTH_34_DEFAULT;
     
     localparam  CR_0_INITIAL_LATENCY = (INITIAL_LATENCY == 3)? CR_0_INITIAL_LATENCY_3 :
                                        (INITIAL_LATENCY == 4)? CR_0_INITIAL_LATENCY_4 :
@@ -264,8 +264,8 @@ module hbmc_ctrl #
         input [31:0] addr;
         begin
             CA_ADDR =   {
-                            {3{1'b0}}, addr[31:19],     // CA0
-                                       addr[18:3],      // CA1
+                            {3{1'b0}},  addr[31:19],    // CA0
+                                        addr[18:3],     // CA1
                             {13{1'b0}}, addr[2:0]       // CA2
                         };
         end
@@ -279,14 +279,15 @@ module hbmc_ctrl #
     
                         reg             reset_n;
                         reg             cs_n;
+                        reg             rwr_tc_run;
                         reg             ck_ena;
                         reg     [1:0]   rwds_sdr_i;
                         reg             rwds_t;
                         reg     [15:0]  dq_sdr_i;
     (* KEEP = "TRUE" *) reg     [7:0]   dq_t;
-                        reg             dru_iserdes_rstn;
+                        reg             dru_iserdes_rst;
                         reg     [7:0]   latency_tc;
-                        reg     [7:0]   rwr_tc;
+                        reg     [2:0]   rwr_tc;
                         reg     [15:0]  power_up_tc;
                         reg     [15:0]  hram_id_reg;
                         reg             fifo_rd;
@@ -315,14 +316,11 @@ module hbmc_ctrl #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    assign hb_reset_n = reset_n;
-    assign hb_cs_n    = cs_n;
+    assign ufifo_data = hb_recov_data;
+    assign ufifo_we   = hb_recov_data_vld & mem_access;
+    assign ufifo_last = word_last;
     
-    assign fifo_din_re = fifo_rd;
-    
-    assign fifo_dout = hb_recov_data;
-    assign fifo_dout_we = hb_recov_data_vld & mem_access;
-    assign fifo_dout_last = word_last;
+    assign dfifo_re = fifo_rd;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
@@ -398,7 +396,7 @@ module hbmc_ctrl #
     )
     hbmc_iobuf_rwds
     (
-        .arstn          ( dru_iserdes_rstn  ),
+        .arst           ( dru_iserdes_rst   ),
         .oddr_clk       ( clk_hbmc_0        ),
         .iserdes_clk    ( iserdes_clk_iobuf ),
         .iserdes_clkdiv ( iserdes_clkdiv    ),
@@ -439,16 +437,16 @@ module hbmc_ctrl #
         for (i = 0; i < 8; i = i + 1) begin : dq
             hbmc_iobuf #
             (
-                .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH                  ),
-                .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE                       ),
-                .USE_IDELAY_PRIMITIVE   ( C_DQ_VECT_USE_IDELAY_PRIMITIVE[i]           ),
-                .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ                        ),
-                .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID                          ),
-                .IDELAY_TAPS_VALUE      ( C_DQ_VECT_IDELAY_TAPS_VALUE[i*5 + 4 : i*5 ] )
+                .DRIVE_STRENGTH         ( C_HBMC_FPGA_DRIVE_STRENGTH                 ),
+                .SLEW_RATE              ( C_HBMC_FPGA_SLEW_RATE                      ),
+                .USE_IDELAY_PRIMITIVE   ( C_DQ_VECT_USE_IDELAY_PRIMITIVE[i]          ),
+                .IODELAY_REFCLK_MHZ     ( C_IODELAY_REFCLK_MHZ                       ),
+                .IODELAY_GROUP_ID       ( C_IODELAY_GROUP_ID                         ),
+                .IDELAY_TAPS_VALUE      ( C_DQ_VECT_IDELAY_TAPS_VALUE[i*5 + 4 : i*5] )
             )
             hbmc_iobuf_dq
             (
-                .arstn          ( rstn                            ),
+                .arst           ( rst                             ),
                 .oddr_clk       ( clk_hbmc_0                      ),
                 .iserdes_clk    ( iserdes_clk_iobuf               ),
                 .iserdes_clkdiv ( iserdes_clkdiv                  ),
@@ -477,7 +475,7 @@ module hbmc_ctrl #
             )
             hbmc_elastic_buf_inst
             (
-                .arstn    ( rstn                         ),
+                .arst     ( rst                          ),
                 .clk_din  ( iserdes_clkdiv               ),
                 .clk_dout ( clk_hbmc_0                   ),
                 .din      ( {rwds_iserdes, data_iserdes} ),
@@ -495,7 +493,7 @@ module hbmc_ctrl #
     hbmc_dru_inst
     (
         .clk                ( clk_hbmc_0        ),
-        .arstn              ( dru_iserdes_rstn  ),
+        .arst               ( dru_iserdes_rst   ),
         .rwds_oversampled   ( rwds_resync       ),
         .data_oversampled   ( data_resync       ),
         .recov_valid        ( hb_recov_data_vld ),
@@ -530,6 +528,7 @@ module hbmc_ctrl #
             ST_WR_0: begin
                 if (rwr_tc >= MIN_RWR) begin
                     cs_n       <= 1'b0;
+                    rwr_tc_run <= 1'b0;
                     ck_ena     <= 1'b1;
                     rwds_t     <= RWDS_DIR_INPUT;
                     dq_t       <= DQ_DIR_OUTPUT;
@@ -571,8 +570,8 @@ module hbmc_ctrl #
             end
             
             ST_WR_5: begin
-                dq_sdr_i   <= fifo_din;
-                rwds_sdr_i <= fifo_din_strb;
+                dq_sdr_i   <= dfifo_data;
+                rwds_sdr_i <= dfifo_strb;
                 if (burst_cnt == wr_size) begin
                     fifo_rd  <= 1'b0;
                     wr_state <= ST_WR_6;
@@ -590,6 +589,7 @@ module hbmc_ctrl #
             
             ST_WR_DONE: begin
                 cs_n <= 1'b1;
+                rwr_tc_run <= 1'b1;
                 wr_state <= FSM_WR_RESET_STATE;
             end
         endcase
@@ -623,13 +623,14 @@ module hbmc_ctrl #
         case (rd_state)
             ST_RD_0: begin
                 if (rwr_tc >= MIN_RWR) begin
-                    cs_n      <= 1'b0;
-                    ck_ena    <= 1'b1;
-                    burst_cnt <= 16'd0;
-                    rwds_t    <= RWDS_DIR_INPUT;
-                    dq_t      <= DQ_DIR_OUTPUT;
-                    dq_sdr_i  <= cmd[47:32];
-                    rd_state  <= ST_RD_1;
+                    cs_n       <= 1'b0;
+                    rwr_tc_run <= 1'b0;
+                    ck_ena     <= 1'b1;
+                    burst_cnt  <= 16'd0;
+                    rwds_t     <= RWDS_DIR_INPUT;
+                    dq_t       <= DQ_DIR_OUTPUT;
+                    dq_sdr_i   <= cmd[47:32];
+                    rd_state   <= ST_RD_1;
                 end
             end
             
@@ -649,7 +650,7 @@ module hbmc_ctrl #
             end
             
             ST_RD_4: begin
-                dru_iserdes_rstn <= 1'b1;
+                dru_iserdes_rst <= 1'b0;
                 if (latency_tc == 8'h00) begin
                     dq_t <= DQ_DIR_INPUT;
                     rd_state <= ST_RD_5;
@@ -673,6 +674,7 @@ module hbmc_ctrl #
             
             ST_RD_7: begin
                 cs_n <= 1'b1;
+                rwr_tc_run <= 1'b1;
                 if (hb_recov_data_vld) begin
                     reg_data <= hb_recov_data;
                     rd_state <= ST_RD_8;
@@ -681,7 +683,7 @@ module hbmc_ctrl #
             
             ST_RD_8: begin
                 if (~hb_recov_data_vld) begin
-                    dru_iserdes_rstn <= 1'b0;
+                    dru_iserdes_rst <= 1'b1;
                     rd_state <= ST_RD_DONE;
                 end
             end
@@ -741,35 +743,36 @@ module hbmc_ctrl #
 
     task local_rst;
     begin
-        wr_state         <= FSM_WR_RESET_STATE;
-        rd_state         <= FSM_RD_RESET_STATE;
+        wr_state        <= FSM_WR_RESET_STATE;
+        rd_state        <= FSM_RD_RESET_STATE;
         
-        cr0_reg          <= CR0_INIT;
-        cr1_reg          <= CR1_INIT;
+        cr0_reg         <= CR0_INIT;
+        cr1_reg         <= CR1_INIT;
         
-        reset_n          <= 1'b0;
-        cs_n             <= 1'b1;
-        ck_ena           <= 1'b0;
-        rwds_sdr_i       <= 2'b00;
-        rwds_t           <= RWDS_DIR_INPUT;
-        dq_sdr_i         <= {16{1'b0}};
-        dq_t             <= DQ_DIR_INPUT;
-        dru_iserdes_rstn <= 1'b0;
-        latency_tc       <=  {8{1'b0}};
-        power_up_tc      <= {16{1'b0}};
-        hram_id_reg      <= {16{1'b0}};
-        fifo_rd          <= 1'b0;
-        mem_access       <= 1'b0;
-        word_last        <= 1'b0;
-        ca               <= {48{1'b0}};
-        burst_cnt        <= {16{1'b0}};
-        burst_size       <= {16{1'b0}};
-        word_count       <= {16{1'b0}};
-        word_count_prev  <= {16{1'b0}};
-        mem_addr         <= {32{1'b0}};
-        wr_not_rd        <= 1'b0;
-        wrap_not_incr    <= 1'b0;
-        cmd_ack          <= 1'b0;
+        reset_n         <= 1'b0;
+        cs_n            <= 1'b1;
+        rwr_tc_run      <= 1'b1;
+        ck_ena          <= 1'b0;
+        rwds_sdr_i      <= 2'b00;
+        rwds_t          <= RWDS_DIR_INPUT;
+        dq_sdr_i        <= {16{1'b0}};
+        dq_t            <= DQ_DIR_INPUT;
+        dru_iserdes_rst <= 1'b1;
+        latency_tc      <=  {8{1'b0}};
+        power_up_tc     <= {16{1'b0}};
+        hram_id_reg     <= {16{1'b0}};
+        fifo_rd         <= 1'b0;
+        mem_access      <= 1'b0;
+        word_last       <= 1'b0;
+        ca              <= {48{1'b0}};
+        burst_cnt       <= {16{1'b0}};
+        burst_size      <= {16{1'b0}};
+        word_count      <= {16{1'b0}};
+        word_count_prev <= {16{1'b0}};
+        mem_addr        <= {32{1'b0}};
+        wr_not_rd       <= 1'b0;
+        wrap_not_incr   <= 1'b0;
+        cmd_ready       <= 1'b0;
     end
     endtask
     
@@ -801,8 +804,8 @@ module hbmc_ctrl #
     reg         [3:0]   state = ST_RST;
     
     
-    always @(posedge clk_hbmc_0 or negedge rstn) begin
-        if (~rstn) begin
+    always @(posedge clk_hbmc_0 or posedge rst) begin
+        if (rst) begin
             local_rst();
             state <= ST_RST;
         end else begin
@@ -849,13 +852,13 @@ module hbmc_ctrl #
                 
                 
                 ST_IDLE: begin
-                    if (cmd_req) begin
+                    if (cmd_valid) begin
                         mem_addr      <= cmd_mem_addr;
                         word_count    <= cmd_word_count;
                         wr_not_rd     <= cmd_wr_not_rd;
                         wrap_not_incr <= cmd_wrap_not_incr;
                         
-                        cmd_ack <= 1'b1;
+                        cmd_ready <= 1'b1;
                         state <= ST_CMD_PREPARE;
                     end
                 end
@@ -863,7 +866,7 @@ module hbmc_ctrl #
                 
                 ST_CMD_PREPARE: begin
                     ca <= ((wr_not_rd)? CA_WR : CA_RD) | CA_MEM_SPACE | ((wrap_not_incr)? CA_BURST_WRAPPED : CA_BURST_LINEAR);
-                    cmd_ack <= 1'b0;
+                    cmd_ready <= 1'b0;
                     state <= (wrap_not_incr)? ST_CHECK_WRAP_BURST_SIZE : ST_BURST_INIT;
                 end
                 
@@ -962,8 +965,9 @@ module hbmc_ctrl #
                 
                 
                 ST_BURST_INIT: begin
-                    /* If AXI transaction is bigger that the max burst size,
-                     * so it will be divided into several transfer. */
+                    /* If AXI transaction size is larger that max burst size,
+                     * that depends on max CS low time, it will be divided
+                     * into several transactions over HuperBUS. */
                     burst_size <= (word_count < MAX_BURST_COUNT)? word_count : MAX_BURST_COUNT;
                     word_last  <= (word_count == 16'd1)? 1'b1 : 1'b0;
                     state <= ST_BURST_XFER;
@@ -980,7 +984,7 @@ module hbmc_ctrl #
                         state <= (rd_done)? ST_BURST_STOP : state;
                     end
                     
-                    if (fifo_din_re | fifo_dout_we) begin
+                    if (dfifo_re | ufifo_we) begin
                         mem_addr <= mem_addr + 1'b1;
                         word_count <= word_count - 1'b1;
                         
@@ -1012,17 +1016,43 @@ module hbmc_ctrl #
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
     /* RWR (Read-Write Recovery) counter process */
-    always @(posedge clk_hbmc_0 or negedge rstn) begin
-        if (~rstn) begin
-            rwr_tc <= 8'h00;
+    always @(posedge clk_hbmc_0 or posedge rst) begin
+        if (rst) begin
+            rwr_tc <= 3'd0;
         end else begin
-            if (cs_n) begin
-                rwr_tc <= (rwr_tc == 8'hff)? rwr_tc : rwr_tc + 1'b1;
+            if (rwr_tc_run) begin
+                rwr_tc <= (rwr_tc == 3'd7)? rwr_tc : rwr_tc + 1'b1;
             end else begin
-                rwr_tc <= 8'h00;
+                rwr_tc <= 3'd0;
             end
         end
     end
+    
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    OBUF #
+    (
+        .DRIVE  ( C_HBMC_FPGA_DRIVE_STRENGTH ),
+        .SLEW   ( C_HBMC_FPGA_SLEW_RATE      )
+    )
+    OBUF_reset_n
+    (
+        .I  ( reset_n    ),
+        .O  ( hb_reset_n )
+    );
+    
+/*----------------------------------------------------------------------------------------------------------------------------*/
+
+    OBUF #
+    (
+        .DRIVE  ( C_HBMC_FPGA_DRIVE_STRENGTH ),
+        .SLEW   ( C_HBMC_FPGA_SLEW_RATE      )
+    )
+    OBUF_cs_n
+    (
+        .I  ( cs_n    ),
+        .O  ( hb_cs_n )
+    );
     
 endmodule
 

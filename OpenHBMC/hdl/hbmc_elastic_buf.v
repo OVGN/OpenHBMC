@@ -31,7 +31,7 @@ module hbmc_elastic_buf #
     parameter   DATA_WIDTH = 8
 )
 (
-    input   wire                        arstn,
+    input   wire                        arst,
     input   wire                        clk_din,
     input   wire                        clk_dout,
     input   wire    [DATA_WIDTH - 1:0]  din,
@@ -40,8 +40,8 @@ module hbmc_elastic_buf #
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    wire    rstn_0;
-    wire    rstn_1;
+    wire    rst_0;
+    wire    rst_1;
     
     
     hbmc_arst_sync #
@@ -51,8 +51,8 @@ module hbmc_elastic_buf #
     hbmc_arst_sync_inst_0
     (
         .clk   ( clk_din ),
-        .arstn ( arstn   ),
-        .rstn  ( rstn_0  )
+        .arst  ( arst    ),
+        .rst   ( rst_0   )
     );
     
     
@@ -63,8 +63,8 @@ module hbmc_elastic_buf #
     hbmc_arst_sync_inst_1
     (
         .clk   ( clk_dout ),
-        .arstn ( arstn    ),
-        .rstn  ( rstn_1   )
+        .arst  ( arst     ),
+        .rst   ( rst_1    )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -74,8 +74,8 @@ module hbmc_elastic_buf #
     wire    [DATA_WIDTH - 1:0]  dout_ram;
     
     /* Circular buffer write pointer */
-    always @(posedge clk_din or negedge rstn_0) begin
-        if (~rstn_0) begin
+    always @(posedge clk_din or posedge rst_0) begin
+        if (rst_0) begin
             wr_addr <= 5'd2;    // write to read pointer margin
         end else begin
             wr_addr <= wr_addr + 1'b1;
@@ -84,8 +84,8 @@ module hbmc_elastic_buf #
     
     
     /* Circular buffer read pointer */
-    always @(posedge clk_dout or negedge rstn_1) begin
-        if (~rstn_1) begin
+    always @(posedge clk_dout or posedge rst_1) begin
+        if (rst_1) begin
             rd_addr <= 5'd0;
             dout    <= {DATA_WIDTH{1'b0}};
         end else begin

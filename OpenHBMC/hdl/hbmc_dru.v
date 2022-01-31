@@ -109,7 +109,7 @@
 module hbmc_dru
 (
     input   wire            clk,
-    input   wire            arstn,
+    input   wire            arst,
     input   wire    [5:0]   rwds_oversampled,
     input   wire    [47:0]  data_oversampled,
     output  wire            recov_valid,
@@ -125,8 +125,8 @@ module hbmc_dru
     reg     [47:0]  data_pipeline;
     
     
-    always @(posedge clk or negedge arstn) begin
-        if (~arstn) begin
+    always @(posedge clk or posedge arst) begin
+        if (arst) begin
             prev_last_bit <= 1'b0;
             rwds_pair_xor <=  {6{1'b0}};
             data_pipeline <= {48{1'b0}};
@@ -187,8 +187,8 @@ module hbmc_dru
     /* Current process performs data bytes recovery,
      * based on RWDS strobe state. At every cycle
      * FSM can recover and output up to 3 bytes max */
-    always @(posedge clk or negedge arstn) begin
-        if (~arstn) begin
+    always @(posedge clk or posedge arst) begin
+        if (arst) begin
             carry      <= 1'b0;
             data_0     <= {8{1'b0}};
             data_1     <= {8{1'b0}};
@@ -314,8 +314,8 @@ module hbmc_dru
      * data stream, this FSM performs data realignment
      * by repacking incoming 1-3 byte width stream into
      * fixed 16-bit stream with valid strobe */
-    always @(posedge clk or negedge arstn) begin
-        if (~arstn) begin
+    always @(posedge clk or posedge arst) begin
+        if (arst) begin
             temp        <= {16{1'b0}};
             data        <= {16{1'b0}};
             temp_valid  <= 2'b00;

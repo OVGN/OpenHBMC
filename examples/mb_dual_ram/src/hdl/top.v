@@ -46,7 +46,7 @@ module top
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    localparam HYPERRAM_CLOCKING_MODE = "BUFG";   // "BUFIO"
+    localparam HYPERRAM_CLOCKING_MODE = "BUFIO";   // "BUFG"
 
     
     generate

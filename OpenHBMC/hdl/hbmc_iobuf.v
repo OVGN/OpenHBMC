@@ -35,7 +35,7 @@ module hbmc_iobuf #
     parameter   [4:0]   IDELAY_TAPS_VALUE       = 0
 )
 (
-    input   wire            arstn,
+    input   wire            arst,
     input   wire            oddr_clk,
     input   wire            iserdes_clk,
     input   wire            iserdes_clkdiv,
@@ -209,7 +209,7 @@ module hbmc_iobuf #
         .D              ( iserdes_d         ),  // 1-bit input: Data input
         .DDLY           ( iserdes_ddly      ),  // 1-bit input: Serial data from IDELAYE2
         .OFB            ( 1'b0              ),  // 1-bit input: Data feedback from OSERDESE2
-        .RST            ( ~arstn            ),  // 1-bit input: Active high asynchronous reset
+        .RST            ( arst              ),  // 1-bit input: Active high asynchronous reset
         
         .DYNCLKDIVSEL   ( 1'b0              ),  // 1-bit input: Dynamic CLKDIV inversion
         .DYNCLKSEL      ( 1'b0              ),  // 1-bit input: Dynamic CLK/CLKB inversion
@@ -224,8 +224,8 @@ module hbmc_iobuf #
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     /* Register ISERDESE2 output */
-    always @(posedge iserdes_clkdiv or negedge arstn) begin
-        if (~arstn) begin
+    always @(posedge iserdes_clkdiv or posedge arst) begin
+        if (arst) begin
             iserdes_o <= {6{1'b0}};
         end else begin
             iserdes_o <= iserdes_q;

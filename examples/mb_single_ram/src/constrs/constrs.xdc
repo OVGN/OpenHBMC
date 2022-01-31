@@ -2,17 +2,17 @@
 # Project:  OpenHBMC
 # Filename: constrs.xdc
 # Purpose:  OpenHBMC example project constraint file for Spartan-7 FPGA
-#           XC7S50-1CSG324C. Fix pin assignments and IO standard parameters
-#           to fit you hardware.
+#           XC7S50-1CSG324C. Fix pin assignments, IO standard parameters
+#           and clock frequency constraints to fit you hardware.
 #----------------------------------------------------------------------------
 # Copyright © 2020-2021, Vaagn Oganesyan <ovgn@protonmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,15 @@
 
 
 
-#-----------------------------------CLK--------------------------------------
+#-------------------------------------CLK------------------------------------
 
 set_property PACKAGE_PIN F14 [get_ports clkin]
 set_property IOSTANDARD LVCMOS33 [get_ports clkin]
 
-#--------------------------------HyperRAM------------------------------------
+# 27MHz clock input
+create_clock -period 37.037 -name clock_clkin -waveform {0.000 18.519} [get_ports clkin]
+
+#----------------------------------HyperRAM----------------------------------
 
 set_property PACKAGE_PIN T1 [get_ports hram_ck_p]
 set_property PACKAGE_PIN U1 [get_ports hram_ck_n]

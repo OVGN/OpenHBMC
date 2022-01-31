@@ -155,9 +155,11 @@ module hbmc_axi_top #
 
     function integer clog2;
         input integer value;
+              integer temp;
         begin
-            for (clog2 = 0; value > 1; clog2 = clog2 + 1) begin
-                value = value >> 1;
+            temp = value;
+            for (clog2 = 0; temp > 1; clog2 = clog2 + 1) begin
+                temp = temp >> 1;
             end
         end
     endfunction
@@ -183,6 +185,8 @@ module hbmc_axi_top #
                 WR_RD_REQ = 2'b11;
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    reg             s_axi_areset;
     
     wire            idelayctrl_rdy_sync;
     wire            clk_idelay;
@@ -215,25 +219,25 @@ module hbmc_axi_top #
     wire            axi_rd_condition = s_axi_arvalid & rd_xfer_done;
     
     
-    /* Read data FIFO wires */
-    wire    [15:0]                      rfifo_wr_data;
-    wire                                rfifo_wr_last;
-    wire                                rfifo_wr_ena;
-    wire    [C_S_AXI_DATA_WIDTH-1:0]    rfifo_rd_dout;
-    wire    [9:0]                       rfifo_rd_free;
-    wire                                rfifo_rd_last;
-    wire                                rfifo_rd_ena = s_axi_rvalid & s_axi_rready;
-    wire                                rfifo_rd_empty;
+    /* Upstream FIFO wires */
+    wire    [15:0]                      ufifo_wr_data;
+    wire                                ufifo_wr_last;
+    wire                                ufifo_wr_ena;
+    wire    [C_S_AXI_DATA_WIDTH-1:0]    ufifo_rd_dout;
+    wire    [9:0]                       ufifo_rd_free;
+    wire                                ufifo_rd_last;
+    wire                                ufifo_rd_ena = s_axi_rvalid & s_axi_rready;
+    wire                                ufifo_rd_empty;
     
     
-    /* Write data FIFO wires */
-    wire    [15:0]                      wfifo_rd_data;
-    wire    [1:0]                       wfifo_rd_strb;
-    wire                                wfifo_rd_ena;
-    wire    [C_S_AXI_DATA_WIDTH-1:0]    wfifo_wr_din  = s_axi_wdata;
-    wire    [C_S_AXI_DATA_WIDTH/8-1:0]  wfifo_wr_strb = s_axi_wstrb;
-    wire                                wfifo_wr_ena  = s_axi_wvalid & s_axi_wready;
-    wire                                wfifo_wr_full;
+    /* Downstream FIFO wires */
+    wire    [15:0]                      dfifo_rd_data;
+    wire    [1:0]                       dfifo_rd_strb;
+    wire                                dfifo_rd_ena;
+    wire    [C_S_AXI_DATA_WIDTH-1:0]    dfifo_wr_din  = s_axi_wdata;
+    wire    [C_S_AXI_DATA_WIDTH/8-1:0]  dfifo_wr_strb = s_axi_wstrb;
+    wire                                dfifo_wr_ena  = s_axi_wvalid & s_axi_wready;
+    wire                                dfifo_wr_full;
     
     
     wire    [C_S_AXI_ADDR_WIDTH - 1:0]  axi_awaddr_aligned = s_axi_awaddr & AXI_ADDR_ALIGN_MASK;
@@ -241,27 +245,42 @@ module hbmc_axi_top #
     
     
     assign  s_axi_rresp   = AXI_RESP_OKAY;
-    assign  s_axi_rdata   =  rfifo_rd_dout;
-    assign  s_axi_rlast   =  rfifo_rd_last;
-    assign  s_axi_rvalid  = ~rfifo_rd_empty;
+    assign  s_axi_rdata   =  ufifo_rd_dout;
+    assign  s_axi_rlast   =  ufifo_rd_last;
+    assign  s_axi_rvalid  = ~ufifo_rd_empty;
     
-    assign  s_axi_wready  = ~wfifo_wr_full;
+    assign  s_axi_wready  = ~dfifo_wr_full;
     assign  s_axi_bresp   = AXI_RESP_OKAY;
     
     generate
         if (C_S_AXI_BUSER_WIDTH > 0) begin
-            assign  s_axi_buser = {C_S_AXI_BUSER_WIDTH{1'b0}};
-            assign  s_axi_ruser = {C_S_AXI_RUSER_WIDTH{1'b0}};
+            assign s_axi_buser = {C_S_AXI_BUSER_WIDTH{1'b0}};
+            assign s_axi_ruser = {C_S_AXI_RUSER_WIDTH{1'b0}};
         end
     endgenerate
     
+/*----------------------------------------------------------------------------------------------------------------------------*/
+    
+    /* AXI active low polarity reset inversion.
+     * Positive reset polarity removes useless
+     * LUT-based reset inverters, as all FPGA's
+     * primitives have positive reset polarity.
+     * This also improves timings. */
+    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
+        if (~s_axi_aresetn) begin
+            s_axi_areset <= 1'b1;
+        end else begin
+            s_axi_areset <= 1'b0;
+        end
+    end
+
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
     generate
         if (C_IDELAYCTRL_INTEGRATED) begin
             
             wire    idelayctrl_rdy;
-            wire    idelayctrl_rstn;
+            wire    idelayctrl_rst;
     
     
             hbmc_arst_sync #
@@ -275,9 +294,9 @@ module hbmc_axi_top #
             )
             hbmc_arst_sync_idelayctrl
             (
-                .clk   ( s_axi_aclk      ),
-                .arstn ( s_axi_aresetn   ),
-                .rstn  ( idelayctrl_rstn )
+                .clk   ( s_axi_aclk     ),
+                .arst  ( s_axi_areset   ),
+                .rst   ( idelayctrl_rst )
             );
             
             
@@ -285,9 +304,9 @@ module hbmc_axi_top #
             IDELAYCTRL
             IDELAYCTRL_inst
             (
-                .RST    ( ~idelayctrl_rstn ),
-                .REFCLK ( clk_idelay_ref   ),
-                .RDY    ( idelayctrl_rdy   )
+                .RST    ( idelayctrl_rst ),
+                .REFCLK ( clk_idelay_ref ),
+                .RDY    ( idelayctrl_rdy )
             );
             
             
@@ -298,7 +317,7 @@ module hbmc_axi_top #
             )
             hbmc_bit_sync_idelayctrl_rdy
             (
-                .arstn  ( s_axi_aresetn       ),
+                .arst   ( s_axi_areset        ),
                 .clk    ( s_axi_aclk          ),
                 .d      ( idelayctrl_rdy      ),
                 .q      ( idelayctrl_rdy_sync )
@@ -346,8 +365,8 @@ module hbmc_axi_top #
     
     
     /* Main transaction processing FSM */
-    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
-        if (~s_axi_aresetn) begin
+    always @(posedge s_axi_aclk or posedge s_axi_areset) begin
+        if (s_axi_areset) begin
             cmd_req           <= 1'b0;
             cmd_wr_not_rd     <= 1'b0;
             cmd_mem_addr      <= {32{1'b0}};
@@ -435,8 +454,8 @@ module hbmc_axi_top #
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
     /* Checking AXI read transfer state */
-    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
-        if (~s_axi_aresetn) begin
+    always @(posedge s_axi_aclk or posedge s_axi_areset) begin
+        if (s_axi_areset) begin
             rd_xfer_done <= 1'b1;
         end else begin
             if (rd_addr_done) begin
@@ -452,8 +471,8 @@ module hbmc_axi_top #
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
     /* Pending AXI write data packets counter */
-    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
-        if (~s_axi_aresetn) begin
+    always @(posedge s_axi_aclk or posedge s_axi_areset) begin
+        if (s_axi_areset) begin
             wr_data_pkt_cnt <= {12{1'b0}};
         end else begin
             case ({wr_resp_done, wr_data_done})
@@ -474,8 +493,8 @@ module hbmc_axi_top #
     
     
     /* AXI write responding FSM */
-    always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
-        if (~s_axi_aresetn) begin
+    always @(posedge s_axi_aclk or posedge s_axi_areset) begin
+        if (s_axi_areset) begin
             wr_xfer_done <= 1'b1;
             s_axi_bvalid <= 1'b0;
             state_bresp  <= ST_BRESP_IDLE;
@@ -483,7 +502,7 @@ module hbmc_axi_top #
             case (state_bresp)
                 ST_BRESP_IDLE: begin
                     /* Start responding when AW was accepted and 
-                     * there is pending write data packet in FIFO */
+                     * there is pending write data packet in dFIFO */
                     if (wr_addr_done & wr_data_pending) begin
                         wr_xfer_done <= 1'b0;
                         s_axi_bvalid <= 1'b1;
@@ -504,7 +523,7 @@ module hbmc_axi_top #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    wire    hbmc_rstn_sync;
+    wire    hbmc_rst_sync;
     
     
     hbmc_arst_sync #
@@ -513,9 +532,9 @@ module hbmc_axi_top #
     )
     hbmc_arst_sync_inst
     (
-        .clk   ( clk_hbmc_0     ),
-        .arstn ( s_axi_aresetn  ),
-        .rstn  ( hbmc_rstn_sync )
+        .clk  ( clk_hbmc_0    ),
+        .arst ( s_axi_areset  ),
+        .rst  ( hbmc_rst_sync )
     );
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -546,17 +565,17 @@ module hbmc_axi_top #
     )
     hbmc_bus_sync_inst
     (
-        .src_clk    ( s_axi_aclk     ),
-        .src_rstn   ( s_axi_aresetn  ),
-        .src_data   ( src_data       ),
-        .src_req    ( cmd_req        ),
-        .src_ack    ( cmd_ack        ),
+        .src_clk    ( s_axi_aclk    ),
+        .src_rst    ( s_axi_areset  ),
+        .src_data   ( src_data      ),
+        .src_req    ( cmd_req       ),
+        .src_ack    ( cmd_ack       ),
         
-        .dst_clk    ( clk_hbmc_0     ),
-        .dst_rstn   ( hbmc_rstn_sync ),
-        .dst_data   ( dst_data       ),
-        .dst_req    ( cmd_req_dst    ),
-        .dst_ack    ( cmd_ack_dst    )
+        .dst_clk    ( clk_hbmc_0    ),
+        .dst_rst    ( hbmc_rst_sync ),
+        .dst_data   ( dst_data      ),
+        .dst_req    ( cmd_req_dst   ),
+        .dst_ack    ( cmd_ack_dst   )
     );
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -596,26 +615,26 @@ module hbmc_axi_top #
     )
     hbmc_ctrl_inst
     (
-        .rstn               ( hbmc_rstn_sync        ),
+        .rst                ( hbmc_rst_sync         ),
         .clk_hbmc_0         ( clk_hbmc_0            ),
         .clk_hbmc_90        ( clk_hbmc_90           ),
         .clk_iserdes        ( clk_iserdes           ),
         .clk_idelay_ref     ( clk_idelay            ),
         
-        .cmd_req            ( cmd_req_dst           ),
-        .cmd_ack            ( cmd_ack_dst           ),
+        .cmd_valid          ( cmd_req_dst           ),
+        .cmd_ready          ( cmd_ack_dst           ),
         .cmd_mem_addr       ( cmd_mem_addr_dst      ),
         .cmd_word_count     ( cmd_word_cnt_dst      ),
         .cmd_wr_not_rd      ( cmd_wr_not_rd_dst     ),
         .cmd_wrap_not_incr  ( cmd_wrap_not_incr_dst ),
         
-        .fifo_dout          ( rfifo_wr_data         ),
-        .fifo_dout_last     ( rfifo_wr_last         ),
-        .fifo_dout_we       ( rfifo_wr_ena          ),
+        .ufifo_data         ( ufifo_wr_data         ),
+        .ufifo_last         ( ufifo_wr_last         ),
+        .ufifo_we           ( ufifo_wr_ena          ),
         
-        .fifo_din           ( wfifo_rd_data         ),
-        .fifo_din_strb      ( wfifo_rd_strb         ),
-        .fifo_din_re        ( wfifo_rd_ena          ),
+        .dfifo_data         ( dfifo_rd_data         ),
+        .dfifo_strb         ( dfifo_rd_strb         ),
+        .dfifo_re           ( dfifo_rd_ena          ),
         
         .hb_ck_p            ( hb_ck_p               ),
         .hb_ck_n            ( hb_ck_n               ),
@@ -627,50 +646,50 @@ module hbmc_axi_top #
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    /* Read data FIFO */
-    hbmc_rfifo #
+    /* Upstream data FIFO */
+    hbmc_ufifo #
     (
         .DATA_WIDTH ( C_S_AXI_DATA_WIDTH )
     )
-    hbmc_rfifo_inst
+    hbmc_ufifo_inst
     (
-        .fifo_arstn     ( s_axi_aresetn  ),
+        .fifo_arst      ( s_axi_areset   ),
         
         .fifo_wr_clk    ( clk_hbmc_0     ),
-        .fifo_wr_din    ( rfifo_wr_data  ),
-        .fifo_wr_last   ( rfifo_wr_last  ),
-        .fifo_wr_ena    ( rfifo_wr_ena   ),
+        .fifo_wr_din    ( ufifo_wr_data  ),
+        .fifo_wr_last   ( ufifo_wr_last  ),
+        .fifo_wr_ena    ( ufifo_wr_ena   ),
         .fifo_wr_full   ( /*----NC----*/ ),
         
         .fifo_rd_clk    ( s_axi_aclk     ),
-        .fifo_rd_dout   ( rfifo_rd_dout  ),
+        .fifo_rd_dout   ( ufifo_rd_dout  ),
         .fifo_rd_free   ( /*----NC----*/ ),
-        .fifo_rd_last   ( rfifo_rd_last  ),
-        .fifo_rd_ena    ( rfifo_rd_ena   ),
-        .fifo_rd_empty  ( rfifo_rd_empty )
+        .fifo_rd_last   ( ufifo_rd_last  ),
+        .fifo_rd_ena    ( ufifo_rd_ena   ),
+        .fifo_rd_empty  ( ufifo_rd_empty )
     );
     
 /*----------------------------------------------------------------------------------------------------------------------------*/
     
-    /* Write data FIFO */
-    hbmc_wfifo #
+    /* Downstream data FIFO */
+    hbmc_dfifo #
     (
         .DATA_WIDTH ( C_S_AXI_DATA_WIDTH )
     )
-    hbmc_wfifo_inst
+    hbmc_dfifo_inst
     (
-        .fifo_arstn     ( s_axi_aresetn  ),
+        .fifo_arst      ( s_axi_areset   ),
     
         .fifo_wr_clk    ( s_axi_aclk     ),
-        .fifo_wr_din    ( wfifo_wr_din   ),
-        .fifo_wr_strb   ( wfifo_wr_strb  ),
-        .fifo_wr_ena    ( wfifo_wr_ena   ),
-        .fifo_wr_full   ( wfifo_wr_full  ),
+        .fifo_wr_din    ( dfifo_wr_din   ),
+        .fifo_wr_strb   ( dfifo_wr_strb  ),
+        .fifo_wr_ena    ( dfifo_wr_ena   ),
+        .fifo_wr_full   ( dfifo_wr_full  ),
         
         .fifo_rd_clk    ( clk_hbmc_0     ),
-        .fifo_rd_dout   ( wfifo_rd_data  ),
-        .fifo_rd_strb   ( wfifo_rd_strb  ),
-        .fifo_rd_ena    ( wfifo_rd_ena   ),
+        .fifo_rd_dout   ( dfifo_rd_data  ),
+        .fifo_rd_strb   ( dfifo_rd_strb  ),
+        .fifo_rd_ena    ( dfifo_rd_ena   ),
         .fifo_rd_empty  ( /*----NC----*/ )
     );
     

@@ -1,8 +1,8 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  OpenHBMC
- *  Filename: hbmc_rfifo.v
- *  Purpose:  FIFO that stores data read from the memory part.
+ *  Filename: hbmc_ufifo.v
+ *  Purpose:  Upstream data FIFO. Stores data read from the memory.
  * ----------------------------------------------------------------------------
  *  Copyright © 2020-2022, Vaagn Oganesyan <ovgn@protonmail.com>
  *  
@@ -25,12 +25,12 @@
 `timescale 1ps / 1ps
 
 
-module hbmc_rfifo #
+module hbmc_ufifo #
 (
     parameter integer DATA_WIDTH = 32
 )
 (
-    input   wire                        fifo_arstn,
+    input   wire                        fifo_arst,
     
     input   wire                        fifo_wr_clk,
     input   wire    [15:0]              fifo_wr_din,
@@ -55,7 +55,7 @@ module hbmc_rfifo #
     generate
         case (DATA_WIDTH)
             
-            16: begin : rFIFO_18b_18b_512w
+            16: begin : uFIFO_18b_18b_512w
                 
                 wire    [17:0]  dout;
                 
@@ -65,7 +65,7 @@ module hbmc_rfifo #
                 fifo_18b_18b_512w
                 fifo_18b_18b_512w_inst
                 (
-                    .rst            ( ~fifo_arstn   ),  // input rst
+                    .rst            ( fifo_arst     ),  // input rst
                     
                     .wr_clk         ( fifo_wr_clk   ),  // input wr_clk
                     .wr_en          ( fifo_wr_ena   ),  // input wr_en
@@ -82,7 +82,7 @@ module hbmc_rfifo #
 
             /*--------------------------------------------------------------------*/
             
-            32: begin : rFIFO_18b_36b_512w
+            32: begin : uFIFO_18b_36b_512w
                 
                 wire    [35:0]  dout;
                 
@@ -92,7 +92,7 @@ module hbmc_rfifo #
                 fifo_18b_36b_512w
                 fifo_18b_36b_512w_inst
                 (
-                    .rst            ( ~fifo_arstn   ),  // input rst
+                    .rst            ( fifo_arst     ),  // input rst
                     
                     .wr_clk         ( fifo_wr_clk   ),  // input wr_clk
                     .wr_en          ( fifo_wr_ena   ),  // input wr_en
@@ -110,7 +110,7 @@ module hbmc_rfifo #
 
             /*--------------------------------------------------------------------*/
             
-            64: begin : rFIFO_18b_72b_512w
+            64: begin : uFIFO_18b_72b_512w
                 
                 wire    [71:0]  dout;
                 
@@ -120,7 +120,7 @@ module hbmc_rfifo #
                 fifo_18b_72b_512w
                 fifo_18b_72b_512w_inst
                 (
-                    .rst            ( ~fifo_arstn   ),  // input rst
+                    .rst            ( fifo_arst     ),  // input rst
                     
                     .wr_clk         ( fifo_wr_clk   ),  // input wr_clk
                     .wr_en          ( fifo_wr_ena   ),  // input wr_en
